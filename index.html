@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Portfolio Manager Simulator (MVP - Enhanced UI)</title>
+  <!-- 
+    ---------------------
+      STYLES & RESPONSIVE
+    ---------------------
+  -->
+  <style>
+    /* Basic resets and fonts */
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+      background: #f8f9fa;
+    }
+
+    /* Container for the entire app */
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 1.5rem;
+      background: #fff;
+      box-shadow: 0 0 10px rgba(0,0,0,0.05);
+      border-radius: 5px;
+      margin-top: 1rem;
+    }
+
+    h1, h2, h3 {
+      margin-top: 0;
+      margin-bottom: 0.75rem;
+    }
+
+    /* Spacing for sections */
+    .section {
+      margin-bottom: 1.5rem;
+      border-bottom: 1px solid #ddd;
+      padding-bottom: 1rem;
+    }
+
+    /* Table styling */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 0.75rem 0;
+    }
+    th, td {
+      text-align: left;
+      padding: 0.5rem;
+    }
+    th {
+      background: #f0f0f0;
+    }
+    .allocation-table tr:not(:last-child) td {
+      border-bottom: 1px solid #eee;
+    }
+
+    /* Input fields, buttons */
+    .input-row {
+      margin: 0.5rem 0;
+    }
+    .input-row label {
+      display: inline-block;
+      width: 80px;
+      font-weight: bold;
+    }
+    .input-row input {
+      width: 100px;
+      padding: 0.3rem;
+      margin-right: 0.5rem;
+      border: 1px solid #ccc;
+      border-radius: 3px;
+    }
+    .btn {
+      padding: 0.5rem 1rem;
+      border: none;
+      background: #007bff;
+      color: #fff;
+      cursor: pointer;
+      border-radius: 3px;
+      margin-right: 0.5rem;
+      font-size: 0.9rem;
+    }
+    .btn:hover {
+      background: #0069d9;
+    }
+
+    .success {
+      color: green;
+      font-weight: bold;
+    }
+    .error {
+      color: red;
+      font-weight: bold;
+    }
+
+    /* 
+      CHARTS & RESPONSIVE LAYOUT 
+      We'll display charts side-by-side on larger screens, but stacked on smaller screens.
+    */
+    .charts-container {
+      display: flex;
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+    .chart-box {
+      flex: 1;
+      background: #f9f9f9;
+      border-radius: 4px;
+      padding: 1rem;
+      text-align: center;
+    }
+    .chart-box canvas {
+      max-width: 100%;
+      height: auto; /* Let chart.js manage the aspect ratio */
+    }
+    .chart-title {
+      margin-bottom: 0.5rem;
+      font-weight: bold;
+    }
+
+    /* 
+      MEDIA QUERY: For screens < 700px wide, stack the chart containers 
+      and reflow the layout for better mobile usability.
+    */
+    @media (max-width: 700px) {
+      .charts-container {
+        flex-direction: column;
+      }
+      .chart-box {
+        margin-bottom: 1rem;
+      }
+    }
+
+    /* Footer styling */
+    .footer {
+      text-align: center;
+      margin-top: 2rem;
+      font-size: 0.85rem;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+
+<!-- 
+  --------------
+    CONTAINER
+  --------------
+-->
+<div class="container">
+  <h1>Portfolio Manager Simulator (Enhanced MVP)</h1>
+
+  <!-- SECTION: Client Profile -->
+  <div class="section">
+    <h2>Client Profile</h2>
+    <p><strong>Name:</strong> <span id="clientName">--</span></p>
+    <p><strong>Risk Tolerance:</strong> <span id="clientRisk">--</span></p>
+    <p><strong>Portfolio Value:</strong> $<span id="clientValue">0</span></p>
+    <p><strong>Target Allocation:</strong> 
+      <span id="targetStocks">--</span>% Stocks, 
+      <span id="targetBonds">--</span>% Bonds, 
+      <span id="targetCash">--</span>% Cash
+    </p>
+  </div>
+
+  <!-- SECTION: Current Portfolio & Trade Inputs -->
+  <div class="section">
+    <h2>Current Portfolio</h2>
+    <table class="allocation-table">
+      <thead>
+        <tr>
+          <th>Asset Class</th>
+          <th>Current ($)</th>
+          <th>Current (%)</th>
+          <th>Target (%)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Stocks</td>
+          <td id="curStocksVal">--</td>
+          <td id="curStocksPct">--</td>
+          <td id="tarStocksPct">--</td>
+        </tr>
+        <tr>
+          <td>Bonds</td>
+          <td id="curBondsVal">--</td>
+          <td id="curBondsPct">--</td>
+          <td id="tarBondsPct">--</td>
+        </tr>
+        <tr>
+          <td>Cash</td>
+          <td id="curCashVal">--</td>
+          <td id="curCashPct">--</td>
+          <td id="tarCashPct">--</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- CHARTS SECTION: Current vs. Target side by side -->
+    <div class="charts-container">
+      <div class="chart-box">
+        <div class="chart-title">Current Allocation</div>
+        <canvas id="currentChart"></canvas>
+      </div>
+      <div class="chart-box">
+        <div class="chart-title">Target Allocation</div>
+        <canvas id="targetChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Trade Inputs -->
+    <h3>Propose Trades</h3>
+    <p>Enter the amounts to buy (+) or sell (−) for each asset. Total buys must equal total sells.</p>
+    <div class="input-row">
+      <label>Stocks:</label>
+      <input type="number" id="tradeStocks" step="0.01" value="0">
+    </div>
+    <div class="input-row">
+      <label>Bonds:</label>
+      <input type="number" id="tradeBonds" step="0.01" value="0">
+    </div>
+    <div class="input-row">
+      <label>Cash:</label>
+      <input type="number" id="tradeCash" step="0.01" value="0">
+    </div>
+
+    <button class="btn" id="rebalanceBtn">Rebalance</button>
+    <button class="btn" id="resetTradesBtn">Reset Trades</button>
+
+    <p id="tradeMessage"></p>
+  </div>
+
+  <!-- SECTION: Controls for new random client -->
+  <div class="section">
+    <button class="btn" id="newClientBtn">Generate New Client</button>
+  </div>
+
+</div>
+
+<div class="footer">
+  Portfolio Manager Simulator &bull; Enhanced MVP &bull; Mobile-Friendly &amp; Chart Integration
+</div>
+
+<!-- 
+  -------------
+    SCRIPTS
+  -------------
+-->
+
+<!-- 1) Chart.js from a CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+/* 
+  Portfolio Manager Simulator (Enhanced MVP)
+  - Mobile-friendly
+  - Pie charts for current vs. target allocations with Chart.js
+*/
+
+// Global state for the current client/portfolio
+let clientName = '';
+let riskTolerance = '';
+let portfolioValue = 0;
+let targetAllocation = { stocks: 0.5, bonds: 0.4, cash: 0.1 };
+let currentHoldings = { stocks: 0, bonds: 0, cash: 0 };
+
+// Chart instances
+let currentChart, targetChart;
+
+// Utility to generate a random client
+function generateRandomClient() {
+  const names = ['John Smith', 'Jane Doe', 'Alex Johnson', 'Maria Garcia', 'Lee Wong'];
+  const riskLevels = [
+    { risk: 'Conservative', allocations: { stocks: 0.3, bonds: 0.5, cash: 0.2 } },
+    { risk: 'Moderate',     allocations: { stocks: 0.5, bonds: 0.4, cash: 0.1 } },
+    { risk: 'Aggressive',   allocations: { stocks: 0.7, bonds: 0.2, cash: 0.1 } }
+  ];
+  const randomName = names[Math.floor(Math.random() * names.length)];
+  const randomRisk = riskLevels[Math.floor(Math.random() * riskLevels.length)];
+
+  // Portfolio total remains 100k
+  const totalVal = 100000;
+  // Create an actual holding that is somewhat off from the target
+  // We'll deviate by up to +/- 10% in each category for variety
+  const deviate = () => (Math.random() * 0.2 - 0.1); // +/- 10%
+  const stDev = randomRisk.allocations.stocks + deviate();
+  const boDev = randomRisk.allocations.bonds + deviate();
+  const caDev = randomRisk.allocations.cash + deviate();
+
+  // Ensure total of stDev+boDev+caDev ~ 1 (normalize)
+  const sumAlloc = Math.max(stDev + boDev + caDev, 0.001); 
+  const normalizedStocks = stDev / sumAlloc;
+  const normalizedBonds = boDev / sumAlloc;
+  const normalizedCash = caDev / sumAlloc;
+
+  return {
+    name: randomName,
+    riskTolerance: randomRisk.risk,
+    portfolioValue: totalVal,
+    targetAllocation: randomRisk.allocations,
+    currentHoldings: {
+      stocks: totalVal * normalizedStocks,
+      bonds: totalVal * normalizedBonds,
+      cash: totalVal * normalizedCash
+    }
+  };
+}
+
+// Render all fields in the UI
+function renderClientData() {
+  document.getElementById('clientName').textContent = clientName;
+  document.getElementById('clientRisk').textContent = riskTolerance;
+  document.getElementById('clientValue').textContent = portfolioValue.toFixed(2);
+  document.getElementById('targetStocks').textContent = (targetAllocation.stocks * 100).toFixed(0);
+  document.getElementById('targetBonds').textContent = (targetAllocation.bonds * 100).toFixed(0);
+  document.getElementById('targetCash').textContent = (targetAllocation.cash * 100).toFixed(0);
+
+  // Current portfolio values
+  const stVal = currentHoldings.stocks;
+  const boVal = currentHoldings.bonds;
+  const caVal = currentHoldings.cash;
+  const totalVal = stVal + boVal + caVal;
+
+  document.getElementById('curStocksVal').textContent = '$' + stVal.toFixed(2);
+  document.getElementById('curBondsVal').textContent = '$' + boVal.toFixed(2);
+  document.getElementById('curCashVal').textContent  = '$' + caVal.toFixed(2);
+
+  // Current percentages
+  if (totalVal > 0) {
+    document.getElementById('curStocksPct').textContent = ((stVal / totalVal) * 100).toFixed(1) + '%';
+    document.getElementById('curBondsPct').textContent = ((boVal / totalVal) * 100).toFixed(1) + '%';
+    document.getElementById('curCashPct').textContent  = ((caVal / totalVal) * 100).toFixed(1) + '%';
+  } else {
+    document.getElementById('curStocksPct').textContent = '--';
+    document.getElementById('curBondsPct').textContent = '--';
+    document.getElementById('curCashPct').textContent  = '--';
+  }
+
+  // Target percentages (for table display)
+  document.getElementById('tarStocksPct').textContent = (targetAllocation.stocks * 100).toFixed(1) + '%';
+  document.getElementById('tarBondsPct').textContent  = (targetAllocation.bonds * 100).toFixed(1) + '%';
+  document.getElementById('tarCashPct').textContent   = (targetAllocation.cash * 100).toFixed(1) + '%';
+
+  // Update charts
+  updateCharts();
+}
+
+function newRandomClient() {
+  const client = generateRandomClient();
+  clientName = client.name;
+  riskTolerance = client.riskTolerance;
+  portfolioValue = client.portfolioValue;
+  targetAllocation = client.targetAllocation;
+  currentHoldings = client.currentHoldings;
+  document.getElementById('tradeMessage').textContent = '';
+  resetTradeInputs();
+  renderClientData();
+}
+
+// Reset the input fields for trades
+function resetTradeInputs() {
+  document.getElementById('tradeStocks').value = 0;
+  document.getElementById('tradeBonds').value = 0;
+  document.getElementById('tradeCash').value  = 0;
+}
+
+// Rebalance the portfolio based on user inputs
+function rebalancePortfolio() {
+  const stTrade = parseFloat(document.getElementById('tradeStocks').value) || 0;
+  const boTrade = parseFloat(document.getElementById('tradeBonds').value) || 0;
+  const caTrade = parseFloat(document.getElementById('tradeCash').value) || 0;
+
+  // Check sum of trades == 0
+  const sumTrades = stTrade + boTrade + caTrade;
+  if (Math.abs(sumTrades) > 0.001) {
+    document.getElementById('tradeMessage').innerHTML =
+      '<span class="error">Error:</span> Total buys must equal total sells (trades must net to zero).';
+    return;
+  }
+
+  // Check if user sells more than current holdings
+  if (stTrade < 0 && Math.abs(stTrade) > currentHoldings.stocks) {
+    document.getElementById('tradeMessage').innerHTML =
+      '<span class="error">Error:</span> Not enough Stocks to sell.';
+    return;
+  }
+  if (boTrade < 0 && Math.abs(boTrade) > currentHoldings.bonds) {
+    document.getElementById('tradeMessage').innerHTML =
+      '<span class="error">Error:</span> Not enough Bonds to sell.';
+    return;
+  }
+  if (caTrade < 0 && Math.abs(caTrade) > currentHoldings.cash) {
+    document.getElementById('tradeMessage').innerHTML =
+      '<span class="error">Error:</span> Not enough Cash to sell.';
+    return;
+  }
+
+  // Valid trades => apply
+  currentHoldings.stocks += stTrade;
+  currentHoldings.bonds  += boTrade;
+  currentHoldings.cash   += caTrade;
+
+  renderClientData();
+  document.getElementById('tradeMessage').innerHTML =
+    '<span class="success">Success!</span> Portfolio rebalanced. Check new allocations above.';
+  resetTradeInputs();
+}
+
+// CHART.JS SETUP ----------------------------------------
+
+// We'll call this once on page load to initialize the charts
+function initializeCharts() {
+  const currentCanvas = document.getElementById('currentChart');
+  const targetCanvas  = document.getElementById('targetChart');
+
+  // Current allocation chart
+  currentChart = new Chart(currentCanvas, {
+    type: 'pie',
+    data: {
+      labels: ['Stocks', 'Bonds', 'Cash'],
+      datasets: [{
+        label: 'Current Allocation',
+        data: [0, 0, 0],
+        backgroundColor: ['#2196f3', '#8bc34a', '#ffc107']
+      }]
+    },
+    options: {
+      plugins: {
+        legend: {
+          position: 'bottom'
+        }
+      },
+      responsive: true,
+      maintainAspectRatio: false
+    }
+  });
+
+  // Target allocation chart
+  targetChart = new Chart(targetCanvas, {
+    type: 'pie',
+    data: {
+      labels: ['Stocks', 'Bonds', 'Cash'],
+      datasets: [{
+        label: 'Target Allocation',
+        data: [0, 0, 0],
+        backgroundColor: ['#2196f3', '#8bc34a', '#ffc107']
+      }]
+    },
+    options: {
+      plugins: {
+        legend: {
+          position: 'bottom'
+        }
+      },
+      responsive: true,
+      maintainAspectRatio: false
+    }
+  });
+}
+
+// Update chart data whenever the portfolio changes
+function updateCharts() {
+  if (!currentChart || !targetChart) return;
+
+  const stVal = currentHoldings.stocks;
+  const boVal = currentHoldings.bonds;
+  const caVal = currentHoldings.cash;
+  // Make sure we handle negative or zero totals gracefully
+  const total = Math.max(stVal + boVal + caVal, 0);
+
+  // Current portfolio
+  currentChart.data.datasets[0].data = [
+    stVal,
+    boVal,
+    caVal
+  ];
+  currentChart.update();
+
+  // Target portfolio
+  // Multiply each target % by total *just for consistent scale*
+  targetChart.data.datasets[0].data = [
+    targetAllocation.stocks * total,
+    targetAllocation.bonds  * total,
+    targetAllocation.cash   * total
+  ];
+  targetChart.update();
+}
+
+// MAIN INIT ---------------------------------------------
+window.addEventListener('DOMContentLoaded', () => {
+  // 1) Initialize the charts
+  initializeCharts();
+
+  // 2) Wire up buttons
+  document.getElementById('newClientBtn').addEventListener('click', newRandomClient);
+  document.getElementById('rebalanceBtn').addEventListener('click', rebalancePortfolio);
+  document.getElementById('resetTradesBtn').addEventListener('click', resetTradeInputs);
+
+  // 3) Generate the first client on load
+  newRandomClient();
+});
+</script>
+</body>
+</html>
