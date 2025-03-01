@@ -2,12 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Portfolio Manager Simulator (MVP - Enhanced UI)</title>
-  <!-- 
-    ---------------------
-      STYLES & RESPONSIVE
-    ---------------------
-  -->
+  <title>Portfolio Manager Simulator (Enhanced & Fixed)</title>
   <style>
     /* Basic resets and fonts */
     * {
@@ -22,12 +17,11 @@
     /* Container for the entire app */
     .container {
       max-width: 900px;
-      margin: 0 auto;
+      margin: 1rem auto;
       padding: 1.5rem;
       background: #fff;
       box-shadow: 0 0 10px rgba(0,0,0,0.05);
       border-radius: 5px;
-      margin-top: 1rem;
     }
 
     h1, h2, h3 {
@@ -35,14 +29,12 @@
       margin-bottom: 0.75rem;
     }
 
-    /* Spacing for sections */
     .section {
       margin-bottom: 1.5rem;
       border-bottom: 1px solid #ddd;
       padding-bottom: 1rem;
     }
 
-    /* Table styling */
     table {
       width: 100%;
       border-collapse: collapse;
@@ -59,7 +51,6 @@
       border-bottom: 1px solid #eee;
     }
 
-    /* Input fields, buttons */
     .input-row {
       margin: 0.5rem 0;
     }
@@ -75,6 +66,7 @@
       border: 1px solid #ccc;
       border-radius: 3px;
     }
+
     .btn {
       padding: 0.5rem 1rem;
       border: none;
@@ -99,50 +91,47 @@
     }
 
     /* 
-      CHARTS & RESPONSIVE LAYOUT 
-      We'll display charts side-by-side on larger screens, but stacked on smaller screens.
+      CHARTS & RESPONSIVE LAYOUT
+      We fix the height of each .chart-box to avoid infinite growth.
     */
     .charts-container {
       display: flex;
       gap: 1rem;
       margin-top: 1rem;
+      flex-wrap: wrap; /* allows wrapping on smaller screens */
     }
     .chart-box {
       flex: 1;
+      min-width: 270px;
+      max-width: 400px;
+      max-height: 400px; /* fix the max height to prevent infinite stretch */
+      position: relative;
+      margin: auto;
       background: #f9f9f9;
       border-radius: 4px;
       padding: 1rem;
       text-align: center;
-      height: 300px; /* Explicit height to prevent infinite stretching */
-      display: flex;
-      flex-direction: column;
-      justify-content: center; /* Centers the chart */
-    }
-
-    .chart-box canvas {
-      max-width: 100%;
-      max-height: 250px; /* Restrict max height */
-      margin: 0 auto;
     }
     .chart-title {
       margin-bottom: 0.5rem;
       font-weight: bold;
     }
+    /* The canvas will fill the parent box but preserve aspect ratio */
+    .chart-box canvas {
+      width: 100% !important;
+      height: 100% !important;
+    }
 
-    /* 
-      MEDIA QUERY: For screens < 700px wide, stack the chart containers 
-      and reflow the layout for better mobile usability.
-    */
     @media (max-width: 700px) {
       .charts-container {
         flex-direction: column;
       }
       .chart-box {
+        max-width: 100%;
         margin-bottom: 1rem;
       }
     }
 
-    /* Footer styling */
     .footer {
       text-align: center;
       margin-top: 2rem;
@@ -153,13 +142,8 @@
 </head>
 <body>
 
-<!-- 
-  --------------
-    CONTAINER
-  --------------
--->
 <div class="container">
-  <h1>Portfolio Manager Simulator (Enhanced MVP)</h1>
+  <h1>Portfolio Manager Simulator (Enhanced &amp; Fixed)</h1>
 
   <!-- SECTION: Client Profile -->
   <div class="section">
@@ -176,13 +160,13 @@
 
   <!-- SECTION: Current Portfolio & Trade Inputs -->
   <div class="section">
-    <h2>Current Portfolio</h2>
+    <h2>Current (or Projected) Portfolio</h2>
     <table class="allocation-table">
       <thead>
         <tr>
           <th>Asset Class</th>
-          <th>Current ($)</th>
-          <th>Current (%)</th>
+          <th id="colValueHeader">Current ($)</th>
+          <th id="colPctHeader">Current (%)</th>
           <th>Target (%)</th>
         </tr>
       </thead>
@@ -211,7 +195,7 @@
     <!-- CHARTS SECTION: Current vs. Target side by side -->
     <div class="charts-container">
       <div class="chart-box">
-        <div class="chart-title">Current Allocation</div>
+        <div class="chart-title">Current / Projected Allocation</div>
         <canvas id="currentChart"></canvas>
       </div>
       <div class="chart-box">
@@ -222,7 +206,7 @@
 
     <!-- Trade Inputs -->
     <h3>Propose Trades</h3>
-    <p>Enter the amounts to buy (+) or sell (−) for each asset. Total buys must equal total sells.</p>
+    <p>Enter amounts to buy (+) or sell (−). Total buys must equal total sells to preview or rebalance.</p>
     <div class="input-row">
       <label>Stocks:</label>
       <input type="number" id="tradeStocks" step="0.01" value="0">
@@ -246,40 +230,36 @@
   <div class="section">
     <button class="btn" id="newClientBtn">Generate New Client</button>
   </div>
-
 </div>
 
 <div class="footer">
-  Portfolio Manager Simulator &bull; Enhanced MVP &bull; Mobile-Friendly &amp; Chart Integration
+  Portfolio Manager Simulator &bull; Enhanced &amp; Mobile-Friendly &bull; Now with bug fixes
 </div>
 
-<!-- 
-  -------------
-    SCRIPTS
-  -------------
--->
+<!-- SCRIPTS -->
 
-<!-- 1) Chart.js from a CDN -->
+<!-- Load Chart.js from a CDN -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
 /* 
-  Portfolio Manager Simulator (Enhanced MVP)
-  - Mobile-friendly
-  - Pie charts for current vs. target allocations with Chart.js
+  Portfolio Manager Simulator: Enhanced & Fixed
+  - 1) Fixed infinite chart height by setting maintainAspectRatio = true + limiting container height.
+  - 2) The "Current (%)" and chart update dynamically (preview) whenever user enters proposed trades.
 */
 
-// Global state for the current client/portfolio
 let clientName = '';
 let riskTolerance = '';
 let portfolioValue = 0;
 let targetAllocation = { stocks: 0.5, bonds: 0.4, cash: 0.1 };
 let currentHoldings = { stocks: 0, bonds: 0, cash: 0 };
 
-// Chart instances
+// We'll store a "previewHoldings" to show dynamic updates as user types.
+let previewHoldings = { stocks: 0, bonds: 0, cash: 0 };
+
 let currentChart, targetChart;
 
-// Utility to generate a random client
+// Generate random client
 function generateRandomClient() {
   const names = ['John Smith', 'Jane Doe', 'Alex Johnson', 'Maria Garcia', 'Lee Wong'];
   const riskLevels = [
@@ -287,23 +267,21 @@ function generateRandomClient() {
     { risk: 'Moderate',     allocations: { stocks: 0.5, bonds: 0.4, cash: 0.1 } },
     { risk: 'Aggressive',   allocations: { stocks: 0.7, bonds: 0.2, cash: 0.1 } }
   ];
+
   const randomName = names[Math.floor(Math.random() * names.length)];
   const randomRisk = riskLevels[Math.floor(Math.random() * riskLevels.length)];
 
-  // Portfolio total remains 100k
+  // total $100k
   const totalVal = 100000;
-  // Create an actual holding that is somewhat off from the target
-  // We'll deviate by up to +/- 10% in each category for variety
-  const deviate = () => (Math.random() * 0.2 - 0.1); // +/- 10%
+  // deviate +/- 10%
+  const deviate = () => (Math.random() * 0.2 - 0.1);
   const stDev = randomRisk.allocations.stocks + deviate();
   const boDev = randomRisk.allocations.bonds + deviate();
   const caDev = randomRisk.allocations.cash + deviate();
-
-  // Ensure total of stDev+boDev+caDev ~ 1 (normalize)
   const sumAlloc = Math.max(stDev + boDev + caDev, 0.001); 
-  const normalizedStocks = stDev / sumAlloc;
-  const normalizedBonds = boDev / sumAlloc;
-  const normalizedCash = caDev / sumAlloc;
+  const normSt = stDev / sumAlloc;
+  const normBo = boDev / sumAlloc;
+  const normCa = caDev / sumAlloc;
 
   return {
     name: randomName,
@@ -311,15 +289,34 @@ function generateRandomClient() {
     portfolioValue: totalVal,
     targetAllocation: randomRisk.allocations,
     currentHoldings: {
-      stocks: totalVal * normalizedStocks,
-      bonds: totalVal * normalizedBonds,
-      cash: totalVal * normalizedCash
+      stocks: totalVal * normSt,
+      bonds:  totalVal * normBo,
+      cash:   totalVal * normCa
     }
   };
 }
 
-// Render all fields in the UI
+// Initialize new client data
+function newRandomClient() {
+  const client = generateRandomClient();
+  clientName = client.name;
+  riskTolerance = client.riskTolerance;
+  portfolioValue = client.portfolioValue;
+  targetAllocation = client.targetAllocation;
+  currentHoldings = client.currentHoldings;
+  
+  // For safety, reset the proposed trades & message
+  resetTradeInputs();
+  document.getElementById('tradeMessage').textContent = '';
+
+  // Start with no preview changes
+  previewHoldings = { ...currentHoldings };
+  renderClientData();
+}
+
+// Renders the "Current (or Projected)" data & target data
 function renderClientData() {
+  // Basic fields
   document.getElementById('clientName').textContent = clientName;
   document.getElementById('clientRisk').textContent = riskTolerance;
   document.getElementById('clientValue').textContent = portfolioValue.toFixed(2);
@@ -327,17 +324,16 @@ function renderClientData() {
   document.getElementById('targetBonds').textContent = (targetAllocation.bonds * 100).toFixed(0);
   document.getElementById('targetCash').textContent = (targetAllocation.cash * 100).toFixed(0);
 
-  // Current portfolio values
-  const stVal = currentHoldings.stocks;
-  const boVal = currentHoldings.bonds;
-  const caVal = currentHoldings.cash;
+  // Current or Projected (i.e., previewHoldings)
+  const stVal = previewHoldings.stocks;
+  const boVal = previewHoldings.bonds;
+  const caVal = previewHoldings.cash;
   const totalVal = stVal + boVal + caVal;
 
   document.getElementById('curStocksVal').textContent = '$' + stVal.toFixed(2);
   document.getElementById('curBondsVal').textContent = '$' + boVal.toFixed(2);
   document.getElementById('curCashVal').textContent  = '$' + caVal.toFixed(2);
 
-  // Current percentages
   if (totalVal > 0) {
     document.getElementById('curStocksPct').textContent = ((stVal / totalVal) * 100).toFixed(1) + '%';
     document.getElementById('curBondsPct').textContent = ((boVal / totalVal) * 100).toFixed(1) + '%';
@@ -348,107 +344,102 @@ function renderClientData() {
     document.getElementById('curCashPct').textContent  = '--';
   }
 
-  // Target percentages (for table display)
+  // Update the table’s "Target (%)" fields
   document.getElementById('tarStocksPct').textContent = (targetAllocation.stocks * 100).toFixed(1) + '%';
   document.getElementById('tarBondsPct').textContent  = (targetAllocation.bonds * 100).toFixed(1) + '%';
   document.getElementById('tarCashPct').textContent   = (targetAllocation.cash * 100).toFixed(1) + '%';
 
-  // Update charts
+  // Update the charts
   updateCharts();
 }
 
-function newRandomClient() {
-  const client = generateRandomClient();
-  clientName = client.name;
-  riskTolerance = client.riskTolerance;
-  portfolioValue = client.portfolioValue;
-  targetAllocation = client.targetAllocation;
-  currentHoldings = client.currentHoldings;
-  document.getElementById('tradeMessage').textContent = '';
-  resetTradeInputs();
+// Called whenever we want to see a "preview" of the trades typed in
+function previewRebalance() {
+  // Parse the three trade fields
+  const stTrade = parseFloat(document.getElementById('tradeStocks').value) || 0;
+  const boTrade = parseFloat(document.getElementById('tradeBonds').value) || 0;
+  const caTrade = parseFloat(document.getElementById('tradeCash').value) || 0;
+  
+  // Sum of trades must be zero to be feasible
+  const sumTrades = stTrade + boTrade + caTrade;
+
+  // We'll show a partial preview only if the user’s trades net to 0
+  // and they do not exceed current holdings if negative
+  if (Math.abs(sumTrades) < 0.0001) {
+    // Check if the user sells more than they have
+    if ((stTrade < 0 && Math.abs(stTrade) > currentHoldings.stocks) ||
+        (boTrade < 0 && Math.abs(boTrade) > currentHoldings.bonds) ||
+        (caTrade < 0 && Math.abs(caTrade) > currentHoldings.cash)) {
+      // If invalid, just revert to actual current holdings
+      previewHoldings = { ...currentHoldings };
+      document.getElementById('tradeMessage').textContent = 'Error: Selling more than available.';
+    } else {
+      // Construct a projected holdings object
+      previewHoldings = {
+        stocks: currentHoldings.stocks + stTrade,
+        bonds:  currentHoldings.bonds + boTrade,
+        cash:   currentHoldings.cash + caTrade
+      };
+      document.getElementById('tradeMessage').textContent = 'Preview updated.';
+    }
+  } else {
+    // If trades don’t net to zero, revert to actual holdings
+    previewHoldings = { ...currentHoldings };
+    document.getElementById('tradeMessage').textContent = 'Trades must sum to zero to preview.';
+  }
+
   renderClientData();
 }
 
-// Reset the input fields for trades
+// Finalize the rebalance – actually update currentHoldings
+function rebalancePortfolio() {
+  // If the preview is valid, finalize it
+  currentHoldings = { ...previewHoldings };
+
+  // Re-render to confirm final state
+  renderClientData();
+
+  document.getElementById('tradeMessage').innerHTML =
+    '<span class="success">Success!</span> Portfolio rebalanced. Check the updated allocations above.';
+
+  resetTradeInputs();
+}
+
+// Reset the trade inputs to zero
 function resetTradeInputs() {
   document.getElementById('tradeStocks').value = 0;
   document.getElementById('tradeBonds').value = 0;
   document.getElementById('tradeCash').value  = 0;
-}
-
-// Rebalance the portfolio based on user inputs
-function rebalancePortfolio() {
-  const stTrade = parseFloat(document.getElementById('tradeStocks').value) || 0;
-  const boTrade = parseFloat(document.getElementById('tradeBonds').value) || 0;
-  const caTrade = parseFloat(document.getElementById('tradeCash').value) || 0;
-
-  // Check sum of trades == 0
-  const sumTrades = stTrade + boTrade + caTrade;
-  if (Math.abs(sumTrades) > 0.001) {
-    document.getElementById('tradeMessage').innerHTML =
-      '<span class="error">Error:</span> Total buys must equal total sells (trades must net to zero).';
-    return;
-  }
-
-  // Check if user sells more than current holdings
-  if (stTrade < 0 && Math.abs(stTrade) > currentHoldings.stocks) {
-    document.getElementById('tradeMessage').innerHTML =
-      '<span class="error">Error:</span> Not enough Stocks to sell.';
-    return;
-  }
-  if (boTrade < 0 && Math.abs(boTrade) > currentHoldings.bonds) {
-    document.getElementById('tradeMessage').innerHTML =
-      '<span class="error">Error:</span> Not enough Bonds to sell.';
-    return;
-  }
-  if (caTrade < 0 && Math.abs(caTrade) > currentHoldings.cash) {
-    document.getElementById('tradeMessage').innerHTML =
-      '<span class="error">Error:</span> Not enough Cash to sell.';
-    return;
-  }
-
-  // Valid trades => apply
-  currentHoldings.stocks += stTrade;
-  currentHoldings.bonds  += boTrade;
-  currentHoldings.cash   += caTrade;
-
+  // Force a fresh preview
+  previewHoldings = { ...currentHoldings };
   renderClientData();
-  document.getElementById('tradeMessage').innerHTML =
-    '<span class="success">Success!</span> Portfolio rebalanced. Check new allocations above.';
-  resetTradeInputs();
 }
 
-// CHART.JS SETUP ----------------------------------------
-
-// We'll call this once on page load to initialize the charts
+// Chart.js initialization
 function initializeCharts() {
-  const currentCanvas = document.getElementById('currentChart');
-  const targetCanvas  = document.getElementById('targetChart');
+  const ctxCurrent = document.getElementById('currentChart');
+  const ctxTarget  = document.getElementById('targetChart');
 
-  // Current allocation chart
-  currentChart = new Chart(currentCanvas, {
+  currentChart = new Chart(ctxCurrent, {
     type: 'pie',
     data: {
       labels: ['Stocks', 'Bonds', 'Cash'],
       datasets: [{
-        label: 'Current Allocation',
+        label: 'Current / Projected',
         data: [0, 0, 0],
         backgroundColor: ['#2196f3', '#8bc34a', '#ffc107']
       }]
     },
     options: {
-      plugins: {
-        legend: {
-          position: 'bottom'
-        }
-      },
       responsive: true,
-      maintainAspectRatio: false
+      maintainAspectRatio: true, /* fix endless growth */
+      plugins: {
+        legend: { position: 'bottom' }
+      }
     }
   });
 
-  // Target allocation chart
-  targetChart = new Chart(targetCanvas, {
+  targetChart = new Chart(ctxTarget, {
     type: 'pie',
     data: {
       labels: ['Stocks', 'Bonds', 'Cash'],
@@ -459,37 +450,30 @@ function initializeCharts() {
       }]
     },
     options: {
-      plugins: {
-        legend: {
-          position: 'bottom'
-        }
-      },
       responsive: true,
-      maintainAspectRatio: false
+      maintainAspectRatio: true,
+      plugins: {
+        legend: { position: 'bottom' }
+      }
     }
   });
 }
 
-// Update chart data whenever the portfolio changes
+// Updates chart data for both current/projected and target
 function updateCharts() {
   if (!currentChart || !targetChart) return;
 
-  const stVal = currentHoldings.stocks;
-  const boVal = currentHoldings.bonds;
-  const caVal = currentHoldings.cash;
-  // Make sure we handle negative or zero totals gracefully
+  // Preview holdings
+  const stVal = previewHoldings.stocks;
+  const boVal = previewHoldings.bonds;
+  const caVal = previewHoldings.cash;
   const total = Math.max(stVal + boVal + caVal, 0);
 
-  // Current portfolio
-  currentChart.data.datasets[0].data = [
-    stVal,
-    boVal,
-    caVal
-  ];
+  // Current / Projected chart
+  currentChart.data.datasets[0].data = [stVal, boVal, caVal];
   currentChart.update();
 
-  // Target portfolio
-  // Multiply each target % by total *just for consistent scale*
+  // Target chart: scale by total for a side-by-side comparison
   targetChart.data.datasets[0].data = [
     targetAllocation.stocks * total,
     targetAllocation.bonds  * total,
@@ -498,17 +482,22 @@ function updateCharts() {
   targetChart.update();
 }
 
-// MAIN INIT ---------------------------------------------
+// MAIN
 window.addEventListener('DOMContentLoaded', () => {
-  // 1) Initialize the charts
+  // 1) Initialize charts
   initializeCharts();
 
-  // 2) Wire up buttons
+  // 2) Event listeners
   document.getElementById('newClientBtn').addEventListener('click', newRandomClient);
   document.getElementById('rebalanceBtn').addEventListener('click', rebalancePortfolio);
   document.getElementById('resetTradesBtn').addEventListener('click', resetTradeInputs);
 
-  // 3) Generate the first client on load
+  // Dynamically preview trades as user types
+  document.getElementById('tradeStocks').addEventListener('input', previewRebalance);
+  document.getElementById('tradeBonds').addEventListener('input', previewRebalance);
+  document.getElementById('tradeCash').addEventListener('input', previewRebalance);
+
+  // 3) Load the first client
   newRandomClient();
 });
 </script>
