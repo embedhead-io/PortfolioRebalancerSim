@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Portfolio Manager Simulator with Delta Columns</title>
+  <title>Portfolio Manager Simulator (Reordered Columns)</title>
   <style>
     * {
       box-sizing: border-box;
@@ -201,19 +201,19 @@
       </div>
     </div>
 
-    <!-- 11 columns now:
-      1) Asset
-      2) Current($)
-      3) Target($)
-      4) Proposed($)
-      5) Final($)
-      6) Current(%)
-      7) Target(%)
-      8) Proposed(%)
-      9) Final(%)
-      10) Delta($) = Final($) - Target($)
-      11) Delta(%) = Final(%) - Target(%)
-    -->
+    <!-- NEW ORDER of 11 columns:
+        1)  Asset
+        2)  Current($)
+        3)  Target($)
+        4)  Proposed +/-($)
+        5)  Final($)
+        6)  Delta($)
+        7)  Current(%)
+        8)  Target(%)
+        9)  Proposed +/-(%)
+        10) Final(%)
+        11) Delta(%)
+     -->
     <table id="portfolioTable">
       <thead>
         <tr>
@@ -222,29 +222,27 @@
           <th>Target ($)</th>
           <th>Proposed +/- ($)</th>
           <th>Final ($)</th>
+          <th>Delta ($)</th>
           <th>Current (%)</th>
           <th>Target (%)</th>
           <th>Proposed +/- (%)</th>
           <th>Final (%)</th>
-          <th>Delta ($)</th>
           <th>Delta (%)</th>
         </tr>
       </thead>
       <tbody id="portfolioRows"></tbody>
       <tfoot>
-        <tr id="totalRow">
-          <!-- We'll fill in sums for the relevant columns -->
-        </tr>
+        <tr id="totalRow"></tr>
       </tfoot>
     </table>
 
     <div class="charts-container">
-      <!-- Left chart: Target Allocation -->
+      <!-- LEFT: Target -->
       <div class="chart-box">
         <div class="chart-title">Target Allocation</div>
         <canvas id="targetChart"></canvas>
       </div>
-      <!-- Right chart: Final Allocation -->
+      <!-- RIGHT: Final -->
       <div class="chart-box">
         <div class="chart-title">Final Allocation</div>
         <canvas id="finalChart"></canvas>
@@ -256,27 +254,29 @@
 </div>
 
 <div class="footer">
-  &copy; Delta Columns &amp; Totals Row Example
+  &copy; Revised Column Order with Delta
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 /**
- * As before, Proposed(%) references the entire portfolio, 
- * so Proposed($)= (Proposed(%) /100)* totalPortfolioValue, etc.
+ * We interpret Proposed(%) as a fraction of the entire portfolio value:
  * 
- * Now we have 2 extra columns:
- *   Delta($)= Final($) - Target($)
- *   Delta(%)= Final(%) - Target(%)
- * 
- * And a total row at the bottom of the table (excluding Delta columns).
+ * Proposed($) = (Proposed(%) / 100) * totalPortfolioValue
+ * Final($)    = Current($) + Proposed($)
+ * Final(%)    = (Final($) / totalPortfolioValue) * 100
+ * Delta($)    = Final($) - Target($)
+ * Delta(%)    = Final(%) - Target(%)
+ *
+ * The table has a "Total" row that sums all relevant numeric columns,
+ * except we skip the Delta($) and Delta(%) columns in the total row.
  */
 
 let totalPortfolioValue = 0;
 let assets = [];
 let finalChart, targetChart;
 
-/** Generate a random client. Same as before. */
+/** Generate a random client. */
 function generateRandomClient() {
   const names = ['John Smith','Jane Doe','Alex Johnson','Maria Garcia','Lee Wong'];
   const riskLevels = [
@@ -300,7 +300,7 @@ function newRandomClient() {
   const c = generateRandomClient();
   totalPortfolioValue = c.portfolioValue;
 
-  // random deviate from target
+  // We'll deviate the current distribution from the target for variety
   const deviate = () => (Math.random()*0.2 - 0.1);
   let stShare= c.stockPct+ deviate();
   let boShare= c.bondPct + deviate();
@@ -311,52 +311,53 @@ function newRandomClient() {
   let boPct= boShare/sum;
   let caPct= caShare/sum;
 
-  // row for Stocks
+  // row #1: Stocks
   let curSt= stPct* totalPortfolioValue;
   let tarSt= c.stockPct* totalPortfolioValue;
-  // row for Bonds
+  // row #2: Bonds
   let curBo= boPct* totalPortfolioValue;
   let tarBo= c.bondPct* totalPortfolioValue;
-  // row for Cash
+  // row #3: Cash
   let curCa= caPct* totalPortfolioValue;
   let tarCa= c.cashPct* totalPortfolioValue;
 
   assets= [
     {
-      name:'Stocks',
+      name: 'Stocks',
       currentDollar: curSt,
       currentPct: (curSt/ totalPortfolioValue)*100,
       targetDollar: tarSt,
       targetPct: (tarSt/ totalPortfolioValue)*100,
-      proposedDollar:0,
-      proposedPct:0,
+      proposedDollar: 0,
+      proposedPct: 0,
       finalDollar: curSt,
       finalPct: (curSt/ totalPortfolioValue)*100
     },
     {
-      name:'Bonds',
+      name: 'Bonds',
       currentDollar: curBo,
       currentPct: (curBo/ totalPortfolioValue)*100,
       targetDollar: tarBo,
       targetPct: (tarBo/ totalPortfolioValue)*100,
-      proposedDollar:0,
-      proposedPct:0,
+      proposedDollar: 0,
+      proposedPct: 0,
       finalDollar: curBo,
       finalPct: (curBo/ totalPortfolioValue)*100
     },
     {
-      name:'Cash',
+      name: 'Cash',
       currentDollar: curCa,
       currentPct: (curCa/ totalPortfolioValue)*100,
       targetDollar: tarCa,
       targetPct: (tarCa/ totalPortfolioValue)*100,
-      proposedDollar:0,
-      proposedPct:0,
+      proposedDollar: 0,
+      proposedPct: 0,
       finalDollar: curCa,
       finalPct: (curCa/ totalPortfolioValue)*100
     }
   ];
 
+  // Render client info
   document.getElementById('clientName').textContent = c.name;
   document.getElementById('clientRisk').textContent = c.risk;
   document.getElementById('clientValue').textContent = formatMoney(c.portfolioValue);
@@ -368,7 +369,7 @@ function newRandomClient() {
   renderTableAndCharts();
 }
 
-/** Re-render table & charts after any changes. */
+/** Re-render the table and charts. */
 function renderTableAndCharts(){
   const tbody= document.getElementById('portfolioRows');
   tbody.innerHTML='';
@@ -376,79 +377,79 @@ function renderTableAndCharts(){
   let sumCurrentD=0, sumTargetD=0, sumProposedD=0, sumFinalD=0;
   let sumCurrentPct=0, sumTargetPct=0, sumProposedPct=0, sumFinalPct=0;
 
-  assets.forEach((row, idx)=>{
-    // compute delta($) = final - target
-    let deltaDollar= row.finalDollar - row.targetDollar;
-    // compute delta(%) = final - target
-    let deltaPct= row.finalPct - row.targetPct;
+  assets.forEach((a, idx)=>{
+    // Delta($)
+    const deltaDollar = a.finalDollar - a.targetDollar;
+    // Delta(%)
+    const deltaPct = a.finalPct - a.targetPct;
 
-    // accumulate sums for total row
-    sumCurrentD += row.currentDollar;
-    sumTargetD  += row.targetDollar;
-    sumProposedD+= row.proposedDollar;
-    sumFinalD   += row.finalDollar;
-    sumCurrentPct+= row.currentPct;
-    sumTargetPct += row.targetPct;
-    sumProposedPct+= row.proposedPct;
-    sumFinalPct+= row.finalPct;
+    // accumulate sums for total row (excluding delta columns)
+    sumCurrentD   += a.currentDollar;
+    sumTargetD    += a.targetDollar;
+    sumProposedD  += a.proposedDollar;
+    sumFinalD     += a.finalDollar;
+    sumCurrentPct += a.currentPct;
+    sumTargetPct  += a.targetPct;
+    sumProposedPct+= a.proposedPct;
+    sumFinalPct   += a.finalPct;
 
-    let tr= document.createElement('tr');
+    const tr= document.createElement('tr');
 
-    // (1) Asset
+    // 1) Asset
     let tdName= document.createElement('td');
-    tdName.textContent= row.name;
+    tdName.textContent= a.name;
     tr.appendChild(tdName);
 
-    // (2) Current($)
+    // 2) Current($)
     let tdCurD= document.createElement('td');
-    tdCurD.textContent= formatMoney(row.currentDollar);
+    tdCurD.textContent= formatMoney(a.currentDollar);
     tr.appendChild(tdCurD);
 
-    // (3) Target($)
+    // 3) Target($)
     let tdTarD= document.createElement('td');
-    tdTarD.textContent= formatMoney(row.targetDollar);
+    tdTarD.textContent= formatMoney(a.targetDollar);
     tr.appendChild(tdTarD);
 
-    // (4) Proposed($) [editable]
+    // 4) Proposed($) [editable]
     let tdPropD= document.createElement('td');
     tdPropD.className='editable-cell';
-    tdPropD.textContent= formatMoney(row.proposedDollar);
+    tdPropD.textContent= formatMoney(a.proposedDollar);
     tdPropD.onclick= ()=> makeEditable(tdPropD, idx, 'dollar');
     tr.appendChild(tdPropD);
 
-    // (5) Final($)
+    // 5) Final($)
     let tdFinD= document.createElement('td');
-    tdFinD.textContent= formatMoney(row.finalDollar);
+    tdFinD.textContent= formatMoney(a.finalDollar);
     tr.appendChild(tdFinD);
 
-    // (6) Current(%)
-    let tdCurP= document.createElement('td');
-    tdCurP.textContent= row.currentPct.toFixed(2)+'%';
-    tr.appendChild(tdCurP);
-
-    // (7) Target(%)
-    let tdTarP= document.createElement('td');
-    tdTarP.textContent= row.targetPct.toFixed(2)+'%';
-    tr.appendChild(tdTarP);
-
-    // (8) Proposed(%) [editable]
-    let tdPropP= document.createElement('td');
-    tdPropP.className='editable-cell';
-    tdPropP.textContent= row.proposedPct.toFixed(2)+'%';
-    tdPropP.onclick= ()=> makeEditable(tdPropP, idx, 'percent');
-    tr.appendChild(tdPropP);
-
-    // (9) Final(%)
-    let tdFinP= document.createElement('td');
-    tdFinP.textContent= row.finalPct.toFixed(2)+'%';
-    tr.appendChild(tdFinP);
-
-    // (10) Delta($)
+    // 6) Delta($)
     let tdDeltaD= document.createElement('td');
     tdDeltaD.textContent= formatMoney(deltaDollar);
     tr.appendChild(tdDeltaD);
 
-    // (11) Delta(%)
+    // 7) Current(%)
+    let tdCurP= document.createElement('td');
+    tdCurP.textContent= a.currentPct.toFixed(2)+'%';
+    tr.appendChild(tdCurP);
+
+    // 8) Target(%)
+    let tdTarP= document.createElement('td');
+    tdTarP.textContent= a.targetPct.toFixed(2)+'%';
+    tr.appendChild(tdTarP);
+
+    // 9) Proposed(%) [editable]
+    let tdPropP= document.createElement('td');
+    tdPropP.className='editable-cell';
+    tdPropP.textContent= a.proposedPct.toFixed(2)+'%';
+    tdPropP.onclick= ()=> makeEditable(tdPropP, idx, 'percent');
+    tr.appendChild(tdPropP);
+
+    // 10) Final(%)
+    let tdFinP= document.createElement('td');
+    tdFinP.textContent= a.finalPct.toFixed(2)+'%';
+    tr.appendChild(tdFinP);
+
+    // 11) Delta(%)
     let tdDeltaP= document.createElement('td');
     tdDeltaP.textContent= deltaPct.toFixed(2)+'%';
     tr.appendChild(tdDeltaP);
@@ -456,70 +457,71 @@ function renderTableAndCharts(){
     tbody.appendChild(tr);
   });
 
-  // Build the totals row (excluding the delta columns).
+  // Build the totals row (excluding Delta columns: #6, #11).
   const tfoot= document.getElementById('totalRow');
   tfoot.innerHTML='';
 
-  // We'll create 11 columns total. For columns 1, 10, 11 (Asset, Delta($), Delta(%)) we show blank or label.
+  // We have 11 columns in total. We'll fill them accordingly:
+  // 1) "TOTAL"
   const col1= document.createElement('td');
   col1.textContent= 'TOTAL';
   tfoot.appendChild(col1);
 
-  // (2) Current($)
+  // 2) sum of Current($)
   const col2= document.createElement('td');
   col2.textContent= formatMoney(sumCurrentD);
   tfoot.appendChild(col2);
 
-  // (3) Target($)
+  // 3) sum of Target($)
   const col3= document.createElement('td');
   col3.textContent= formatMoney(sumTargetD);
   tfoot.appendChild(col3);
 
-  // (4) Proposed($)
+  // 4) sum of Proposed($)
   const col4= document.createElement('td');
   col4.textContent= formatMoney(sumProposedD);
   tfoot.appendChild(col4);
 
-  // (5) Final($)
+  // 5) sum of Final($)
   const col5= document.createElement('td');
   col5.textContent= formatMoney(sumFinalD);
   tfoot.appendChild(col5);
 
-  // (6) Current(%)
+  // 6) Delta($) => blank
   const col6= document.createElement('td');
-  col6.textContent= sumCurrentPct.toFixed(2)+'%';
+  col6.textContent= '';
   tfoot.appendChild(col6);
 
-  // (7) Target(%)
+  // 7) sum of Current(%)
   const col7= document.createElement('td');
-  col7.textContent= sumTargetPct.toFixed(2)+'%';
+  col7.textContent= sumCurrentPct.toFixed(2)+'%';
   tfoot.appendChild(col7);
 
-  // (8) Proposed(%)
+  // 8) sum of Target(%)
   const col8= document.createElement('td');
-  col8.textContent= sumProposedPct.toFixed(2)+'%';
+  col8.textContent= sumTargetPct.toFixed(2)+'%';
   tfoot.appendChild(col8);
 
-  // (9) Final(%)
+  // 9) sum of Proposed(%)
   const col9= document.createElement('td');
-  col9.textContent= sumFinalPct.toFixed(2)+'%';
+  col9.textContent= sumProposedPct.toFixed(2)+'%';
   tfoot.appendChild(col9);
 
-  // (10) Delta($) - blank total
+  // 10) sum of Final(%)
   const col10= document.createElement('td');
-  col10.textContent= '';
+  col10.textContent= sumFinalPct.toFixed(2)+'%';
   tfoot.appendChild(col10);
 
-  // (11) Delta(%) - blank total
+  // 11) Delta(%) => blank
   const col11= document.createElement('td');
   col11.textContent= '';
   tfoot.appendChild(col11);
 
-  // Update charts
+  // Finally update the charts
   updateCharts();
 }
 
-/** Editing logic: Proposed(%) references total portfolio. */
+/** Single-click editing for Proposed($ or %). */
 function makeEditable(cell, assetIndex, mode){
   let oldVal= cell.textContent.replace(/[^\d.-]/g,'');
   cell.onclick=null;
@@ -542,12 +544,12 @@ function makeEditable(cell, assetIndex, mode){
 }
 
 /** 
- * Proposed(%) => Proposed($)= (Proposed(%)/100)* totalPortfolioValue 
- * Final($)= current + proposed($)
+ * Proposed(%) => Proposed($)= (Proposed(%)/100)* totalPortfolioValue
+ * Final($)= current($)+ proposed($)
  * Final(%)= final($)/ portfolioValue *100
  * 
- * Proposed($) => Proposed(%)= Proposed($)/ portfolioValue *100
- * Final($)= current + proposed($)
+ * Proposed($)=> Proposed(%)= (proposed($)/ portfolioValue)*100
+ * Final($)= current($)+ proposed($)
  * Final(%)= final($)/ portfolioValue *100
  */
 function finishEdit(cell, rawVal, assetIndex, mode){
@@ -569,7 +571,7 @@ function finishEdit(cell, rawVal, assetIndex, mode){
 
   renderTableAndCharts();
 
-  // restore single-click
+  // restore the single-click
   if(mode==='percent'){
     cell.textContent= row.proposedPct.toFixed(2)+'%';
     cell.onclick= ()=> makeEditable(cell, assetIndex, 'percent');
@@ -579,25 +581,25 @@ function finishEdit(cell, rawVal, assetIndex, mode){
   }
 }
 
-/** "Rebalance" does not reset proposed amounts. */
+/** Rebalance => does not reset proposed. */
 function doRebalance(){
   document.getElementById('tradeMessage').innerHTML=
     '<span class="success">Rebalance triggered (Proposed not cleared).</span>';
 }
 
-/** "Reset Trades" => Proposed=0 => Final= Current. */
+/** Reset => sets Proposed=0 => Final= Current. */
 function doResetTrades(){
   assets.forEach(a=>{
     a.proposedDollar=0;
     a.proposedPct=0;
-    a.finalDollar= a.currentDollar;
-    a.finalPct= a.currentPct;
+    a.finalDollar=a.currentDollar;
+    a.finalPct=a.currentPct;
   });
   renderTableAndCharts();
   document.getElementById('tradeMessage').textContent='All proposed trades reset to 0.';
 }
 
-/** Update charts => left chart= target, right chart= final. */
+/** Update the two charts => target on the left, final on the right. */
 function updateCharts(){
   const tarVals= assets.map(a=> a.targetDollar);
   const finVals= assets.map(a=> a.finalDollar);
@@ -612,7 +614,7 @@ function updateCharts(){
   finalChart.update();
 }
 
-/** Format dollars. */
+/** Format a number as money w/ commas, 2 decimals. */
 function formatMoney(x){
   return new Intl.NumberFormat('en-US',{
     minimumFractionDigits:2,
@@ -620,9 +622,9 @@ function formatMoney(x){
   }).format(x);
 }
 
-/** Initialize the two charts with reversed order: target on the left, final on the right. */
+/** Initialize the chart objects. */
 function initCharts(){
-  targetChart= new Chart(document.getElementById('targetChart'), {
+  targetChart= new Chart(document.getElementById('targetChart'),{
     type:'pie',
     data:{
       labels:[],
@@ -639,7 +641,7 @@ function initCharts(){
     }
   });
 
-  finalChart= new Chart(document.getElementById('finalChart'), {
+  finalChart= new Chart(document.getElementById('finalChart'),{
     type:'pie',
     data:{
       labels:[],
@@ -657,7 +659,7 @@ function initCharts(){
   });
 }
 
-/** On page load. */
+/** On DOM load. */
 window.addEventListener('DOMContentLoaded', ()=>{
   initCharts();
   document.getElementById('newClientBtn').addEventListener('click', newRandomClient);
