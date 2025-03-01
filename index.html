@@ -113,10 +113,16 @@
       border-radius: 4px;
       padding: 1rem;
       text-align: center;
+      height: 300px; /* Explicit height to prevent infinite stretching */
+      display: flex;
+      flex-direction: column;
+      justify-content: center; /* Centers the chart */
     }
+
     .chart-box canvas {
       max-width: 100%;
-      height: auto; /* Let chart.js manage the aspect ratio */
+      max-height: 250px; /* Restrict max height */
+      margin: 0 auto;
     }
     .chart-title {
       margin-bottom: 0.5rem;
