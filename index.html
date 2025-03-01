@@ -2,9 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Portfolio Manager Simulator (Enhanced & Fixed)</title>
+  <title>Portfolio Manager Simulator (Revised Requirements)</title>
   <style>
-    /* Basic resets and fonts */
     * {
       box-sizing: border-box;
     }
@@ -14,7 +13,6 @@
       background: #f8f9fa;
     }
 
-    /* Container for the entire app */
     .container {
       max-width: 900px;
       margin: 1rem auto;
@@ -35,76 +33,101 @@
       padding-bottom: 1rem;
     }
 
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin: 0.75rem 0;
-    }
-    th, td {
-      text-align: left;
-      padding: 0.5rem;
-    }
-    th {
-      background: #f0f0f0;
-    }
-    .allocation-table tr:not(:last-child) td {
-      border-bottom: 1px solid #eee;
-    }
-
-    .input-row {
-      margin: 0.5rem 0;
-    }
-    .input-row label {
-      display: inline-block;
-      width: 80px;
-      font-weight: bold;
-    }
-    .input-row input {
-      width: 100px;
-      padding: 0.3rem;
-      margin-right: 0.5rem;
-      border: 1px solid #ccc;
-      border-radius: 3px;
-    }
-
     .btn {
-      padding: 0.5rem 1rem;
+      padding: 0.4rem 0.8rem;
       border: none;
       background: #007bff;
       color: #fff;
       cursor: pointer;
       border-radius: 3px;
-      margin-right: 0.5rem;
+      margin-left: 0.5rem;
       font-size: 0.9rem;
     }
     .btn:hover {
       background: #0069d9;
     }
 
-    .success {
-      color: green;
-      font-weight: bold;
+    /* CLIENT PROFILE */
+    #client-profile {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      flex-wrap: wrap;
     }
-    .error {
-      color: red;
-      font-weight: bold;
+    .profile-info {
+      flex: 1;
+      min-width: 250px;
+      margin-right: 1rem;
+    }
+    .profile-info p {
+      margin: 0.3rem 0;
     }
 
-    /* 
-      CHARTS & RESPONSIVE LAYOUT
-      We fix the height of each .chart-box to avoid infinite growth.
-    */
+    /* Moved generate new client button to bottom of client profile */
+    .profile-actions {
+      margin-top: 1rem;
+    }
+
+    /* CURRENT (OR PROJECTED) HEADER WITH BUTTONS ON THE SAME LINE, RIGHT-ALIGNED */
+    .portfolio-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      margin-bottom: 0.5rem;
+    }
+    .portfolio-header h2 {
+      margin-bottom: 0.3rem;
+    }
+    .portfolio-buttons {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    /* TABLE */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 0.5rem 0;
+    }
+    th, td {
+      text-align: left;
+      padding: 0.4rem;
+      border-bottom: 1px solid #eee;
+      vertical-align: middle;
+    }
+    th {
+      background: #f0f0f0;
+    }
+
+    /* Proposed +/- cells become editable on single click */
+    .editable-cell {
+      cursor: pointer;
+      background: #fafafa;
+      border: 1px solid transparent;
+    }
+    .editable-cell input {
+      width: 100%;
+      border: 1px solid #007bff;
+      outline: none;
+      font: inherit;
+      box-sizing: border-box;
+      padding: 2px 4px;
+      text-align: right;
+    }
+
+    /* CHARTS LAYOUT */
     .charts-container {
       display: flex;
       gap: 1rem;
       margin-top: 1rem;
-      flex-wrap: wrap; /* allows wrapping on smaller screens */
+      flex-wrap: wrap;
     }
     .chart-box {
       flex: 1;
       min-width: 270px;
       max-width: 400px;
-      max-height: 400px; /* fix the max height to prevent infinite stretch */
+      max-height: 400px;
       position: relative;
       margin: auto;
       background: #f9f9f9;
@@ -116,7 +139,6 @@
       margin-bottom: 0.5rem;
       font-weight: bold;
     }
-    /* The canvas will fill the parent box but preserve aspect ratio */
     .chart-box canvas {
       width: 100% !important;
       height: 100% !important;
@@ -138,301 +160,466 @@
       font-size: 0.85rem;
       color: #666;
     }
+
+    .success {
+      color: green;
+      font-weight: bold;
+    }
+    .error {
+      color: red;
+      font-weight: bold;
+    }
   </style>
 </head>
 <body>
 
 <div class="container">
-  <h1>Portfolio Manager Simulator (Enhanced &amp; Fixed)</h1>
+  <h1>Portfolio Manager Simulator</h1>
 
-  <!-- SECTION: Client Profile -->
+  <!-- SECTION: CLIENT PROFILE -->
   <div class="section">
     <h2>Client Profile</h2>
-    <p><strong>Name:</strong> <span id="clientName">--</span></p>
-    <p><strong>Risk Tolerance:</strong> <span id="clientRisk">--</span></p>
-    <p><strong>Portfolio Value:</strong> $<span id="clientValue">0</span></p>
-    <p><strong>Target Allocation:</strong> 
-      <span id="targetStocks">--</span>% Stocks, 
-      <span id="targetBonds">--</span>% Bonds, 
-      <span id="targetCash">--</span>% Cash
-    </p>
+    <div id="client-profile">
+      <div class="profile-info">
+        <p><strong>Name:</strong> <span id="clientName">--</span></p>
+        <p><strong>Risk Tolerance:</strong> <span id="clientRisk">--</span></p>
+        <p><strong>Portfolio Value:</strong> $<span id="clientValue">0</span></p>
+        <p><strong>Target Allocation:</strong> 
+          <span id="targetStocks">--</span>% Stocks, 
+          <span id="targetBonds">--</span>% Bonds, 
+          <span id="targetCash">--</span>% Cash
+        </p>
+
+        <!-- Moved "Generate New Client" button to bottom of client profile -->
+        <div class="profile-actions">
+          <button class="btn" id="newClientBtn">Generate New Client</button>
+        </div>
+      </div>
+    </div>
   </div>
 
-  <!-- SECTION: Current Portfolio & Trade Inputs -->
+  <!-- SECTION: CURRENT (OR PROJECTED) PORTFOLIO -->
   <div class="section">
-    <h2>Current (or Projected) Portfolio</h2>
-    <table class="allocation-table">
+    <div class="portfolio-header">
+      <h2>Current (or Projected) Portfolio</h2>
+      <div class="portfolio-buttons">
+        <!-- Right-aligned Rebalance & Reset Trades -->
+        <button class="btn" id="rebalanceBtn">Rebalance</button>
+        <button class="btn" id="resetTradesBtn">Reset Trades</button>
+      </div>
+    </div>
+
+    <!-- 
+      TABLE COLUMNS: 
+        1) Asset Class
+        2) Current($)
+        3) Target($)
+        4) Proposed +/-($)
+        5) Final($)
+        6) Current(%)
+        7) Target(%)
+        8) Proposed +/-(%)
+        9) Final(%)
+    -->
+    <table id="portfolioTable">
       <thead>
         <tr>
-          <th>Asset Class</th>
-          <th id="colValueHeader">Current ($)</th>
-          <th id="colPctHeader">Current (%)</th>
+          <th>Asset</th>
+          <th>Current ($)</th>
+          <th>Target ($)</th>
+          <th>Proposed +/- ($)</th>
+          <th>Final ($)</th>
+          <th>Current (%)</th>
           <th>Target (%)</th>
+          <th>Proposed +/- (%)</th>
+          <th>Final (%)</th>
         </tr>
       </thead>
-      <tbody>
-        <tr>
-          <td>Stocks</td>
-          <td id="curStocksVal">--</td>
-          <td id="curStocksPct">--</td>
-          <td id="tarStocksPct">--</td>
-        </tr>
-        <tr>
-          <td>Bonds</td>
-          <td id="curBondsVal">--</td>
-          <td id="curBondsPct">--</td>
-          <td id="tarBondsPct">--</td>
-        </tr>
-        <tr>
-          <td>Cash</td>
-          <td id="curCashVal">--</td>
-          <td id="curCashPct">--</td>
-          <td id="tarCashPct">--</td>
-        </tr>
+      <tbody id="portfolioRows">
+        <!-- Populated by JS -->
       </tbody>
     </table>
 
-    <!-- CHARTS SECTION: Current vs. Target side by side -->
     <div class="charts-container">
+      <!-- Left chart: Final Allocation (based on Current + Proposed) -->
       <div class="chart-box">
-        <div class="chart-title">Current / Projected Allocation</div>
-        <canvas id="currentChart"></canvas>
+        <div class="chart-title">Final Allocation</div>
+        <canvas id="finalChart"></canvas>
       </div>
+      <!-- Right chart: Target Allocation -->
       <div class="chart-box">
         <div class="chart-title">Target Allocation</div>
         <canvas id="targetChart"></canvas>
       </div>
     </div>
 
-    <!-- Trade Inputs -->
-    <h3>Propose Trades</h3>
-    <p>Enter amounts to buy (+) or sell (−). Total buys must equal total sells to preview or rebalance.</p>
-    <div class="input-row">
-      <label>Stocks:</label>
-      <input type="number" id="tradeStocks" step="0.01" value="0">
-    </div>
-    <div class="input-row">
-      <label>Bonds:</label>
-      <input type="number" id="tradeBonds" step="0.01" value="0">
-    </div>
-    <div class="input-row">
-      <label>Cash:</label>
-      <input type="number" id="tradeCash" step="0.01" value="0">
-    </div>
-
-    <button class="btn" id="rebalanceBtn">Rebalance</button>
-    <button class="btn" id="resetTradesBtn">Reset Trades</button>
-
     <p id="tradeMessage"></p>
-  </div>
-
-  <!-- SECTION: Controls for new random client -->
-  <div class="section">
-    <button class="btn" id="newClientBtn">Generate New Client</button>
   </div>
 </div>
 
 <div class="footer">
-  Portfolio Manager Simulator &bull; Enhanced &amp; Mobile-Friendly &bull; Now with bug fixes
+  &copy; Revised MVP with Single-Click Editing &amp; Expanded Table Columns
 </div>
 
 <!-- SCRIPTS -->
-
-<!-- Load Chart.js from a CDN -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
 <script>
 /* 
-  Portfolio Manager Simulator: Enhanced & Fixed
-  - 1) Fixed infinite chart height by setting maintainAspectRatio = true + limiting container height.
-  - 2) The "Current (%)" and chart update dynamically (preview) whenever user enters proposed trades.
+  Implementation Details:
+
+  1) We store each asset row in an array "assets".
+     For each asset:
+       { 
+         name: "Stocks",
+         currentDollar:  55000,
+         targetDollar:   50000,
+         proposedDollar: 0,       // user enters +/- here
+         finalDollar:    55000,   // calculated: current + proposed
+         currentPct:     0,       // row share of total current
+         targetPct:      0,       // row share of total target
+         proposedPct:    0,       // user enters +/- in % form (like +5.0 => +5% of total current?)
+         finalPct:       0        // row share of final total
+       }
+
+  2) Single-click on Proposed +/- ($) or Proposed +/- (%) cells:
+     - We replace the cell with an <input>, auto-select the existing value
+     - On blur (or Enter), we parse the new value, update "proposedDollar" or "proposedPct", recalc the row & entire portfolio.
+
+  3) The "Final($)" = currentDollar + proposedDollar
+     The "Final(%)" = finalDollar / sumOfAllFinalDollars * 100
+     Similarly for "proposedPct": If user edits Proposed +/-(%), we convert that to a dollar amount:
+       proposedDollar = (proposedPct / 100) * totalCurrentDollars
+     Then recalc finalDollar.
+
+  4) Rebalance does NOT reset the Proposed columns. It's up to your game logic what "rebalance" should do.
+
+  5) "Reset Trades" sets all Proposed +/- columns to zero. 
+  6) Thousands separators handled by a "formatMoney()" function using Intl.NumberFormat.
+
 */
 
+/** Global arrays for assets. We handle 3: Stocks, Bonds, Cash. */
+let assets = [];
+let totalCurrent = 0;
+let totalTarget  = 0;
+let totalFinal   = 0; // sum of final dollars across all assets
+
+// Chart.js references
+let finalChart, targetChart;
+
+// Example data used initially:
 let clientName = '';
-let riskTolerance = '';
-let portfolioValue = 0;
-let targetAllocation = { stocks: 0.5, bonds: 0.4, cash: 0.1 };
-let currentHoldings = { stocks: 0, bonds: 0, cash: 0 };
+let clientRisk = '';
+let clientValue = 0; // total portfolio
+let targetStocksPct = 0;
+let targetBondsPct  = 0;
+let targetCashPct   = 0;
 
-// We'll store a "previewHoldings" to show dynamic updates as user types.
-let previewHoldings = { stocks: 0, bonds: 0, cash: 0 };
-
-let currentChart, targetChart;
-
-// Generate random client
+/** Create a random client. You can expand this logic as you like. */
 function generateRandomClient() {
   const names = ['John Smith', 'Jane Doe', 'Alex Johnson', 'Maria Garcia', 'Lee Wong'];
   const riskLevels = [
-    { risk: 'Conservative', allocations: { stocks: 0.3, bonds: 0.5, cash: 0.2 } },
-    { risk: 'Moderate',     allocations: { stocks: 0.5, bonds: 0.4, cash: 0.1 } },
-    { risk: 'Aggressive',   allocations: { stocks: 0.7, bonds: 0.2, cash: 0.1 } }
+    { name: 'Conservative', stockPct: 0.3, bondPct: 0.5, cashPct: 0.2 },
+    { name: 'Moderate',     stockPct: 0.5, bondPct: 0.4, cashPct: 0.1 },
+    { name: 'Aggressive',   stockPct: 0.7, bondPct: 0.2, cashPct: 0.1 }
   ];
-
-  const randomName = names[Math.floor(Math.random() * names.length)];
-  const randomRisk = riskLevels[Math.floor(Math.random() * riskLevels.length)];
-
-  // total $100k
-  const totalVal = 100000;
-  // deviate +/- 10%
-  const deviate = () => (Math.random() * 0.2 - 0.1);
-  const stDev = randomRisk.allocations.stocks + deviate();
-  const boDev = randomRisk.allocations.bonds + deviate();
-  const caDev = randomRisk.allocations.cash + deviate();
-  const sumAlloc = Math.max(stDev + boDev + caDev, 0.001); 
-  const normSt = stDev / sumAlloc;
-  const normBo = boDev / sumAlloc;
-  const normCa = caDev / sumAlloc;
-
+  const randName = names[Math.floor(Math.random() * names.length)];
+  const randRisk = riskLevels[Math.floor(Math.random() * riskLevels.length)];
   return {
-    name: randomName,
-    riskTolerance: randomRisk.risk,
-    portfolioValue: totalVal,
-    targetAllocation: randomRisk.allocations,
-    currentHoldings: {
-      stocks: totalVal * normSt,
-      bonds:  totalVal * normBo,
-      cash:   totalVal * normCa
-    }
+    clientName: randName,
+    riskTolerance: randRisk.name,
+    totalValue: 100000,
+    targetStockPct: randRisk.stockPct,
+    targetBondPct:  randRisk.bondPct,
+    targetCashPct:  randRisk.cashPct
   };
 }
 
-// Initialize new client data
+/** Called on DOMContentLoaded or when user clicks "Generate New Client". */
 function newRandomClient() {
-  const client = generateRandomClient();
-  clientName = client.name;
-  riskTolerance = client.riskTolerance;
-  portfolioValue = client.portfolioValue;
-  targetAllocation = client.targetAllocation;
-  currentHoldings = client.currentHoldings;
-  
-  // For safety, reset the proposed trades & message
-  resetTradeInputs();
+  const c = generateRandomClient();
+  clientName = c.clientName;
+  clientRisk = c.riskTolerance;
+  clientValue = c.totalValue;
+  targetStocksPct = c.targetStockPct;
+  targetBondsPct  = c.targetBondPct;
+  targetCashPct   = c.targetCashPct;
+
+  // We'll deviate the current amounts a bit from target
+  // just to make it interesting:
+  // If target was 50% stocks, let's do +/− up to 10% random
+  const deviate = () => (Math.random() * 0.2 - 0.1); 
+  const stDev = targetStocksPct + deviate();
+  const boDev = targetBondsPct + deviate();
+  const caDev = targetCashPct + deviate();
+  const sum   = Math.max(stDev + boDev + caDev, 0.001);
+  const stPct = stDev / sum;
+  const boPct = boDev / sum;
+  const caPct = caDev / sum;
+
+  // Build the assets array
+  // currentDollar = totalValue * each pct
+  // targetDollar  = totalValue * official target
+  assets = [
+    {
+      name: "Stocks",
+      currentDollar: c.totalValue * stPct,
+      targetDollar:  c.totalValue * c.targetStockPct,
+      proposedDollar: 0,
+      finalDollar: 0,
+      currentPct: 0,
+      targetPct: 0,
+      proposedPct: 0,
+      finalPct: 0
+    },
+    {
+      name: "Bonds",
+      currentDollar: c.totalValue * boPct,
+      targetDollar:  c.totalValue * c.targetBondPct,
+      proposedDollar: 0,
+      finalDollar: 0,
+      currentPct: 0,
+      targetPct: 0,
+      proposedPct: 0,
+      finalPct: 0
+    },
+    {
+      name: "Cash",
+      currentDollar: c.totalValue * caPct,
+      targetDollar:  c.totalValue * c.targetCashPct,
+      proposedDollar: 0,
+      finalDollar: 0,
+      currentPct: 0,
+      targetPct: 0,
+      proposedPct: 0,
+      finalPct: 0
+    }
+  ];
+
   document.getElementById('tradeMessage').textContent = '';
 
-  // Start with no preview changes
-  previewHoldings = { ...currentHoldings };
-  renderClientData();
+  renderClientProfile();
+  recalcAndRender();
 }
 
-// Renders the "Current (or Projected)" data & target data
-function renderClientData() {
-  // Basic fields
+/** Display the name/risk in the Client Profile. */
+function renderClientProfile() {
   document.getElementById('clientName').textContent = clientName;
-  document.getElementById('clientRisk').textContent = riskTolerance;
-  document.getElementById('clientValue').textContent = portfolioValue.toFixed(2);
-  document.getElementById('targetStocks').textContent = (targetAllocation.stocks * 100).toFixed(0);
-  document.getElementById('targetBonds').textContent = (targetAllocation.bonds * 100).toFixed(0);
-  document.getElementById('targetCash').textContent = (targetAllocation.cash * 100).toFixed(0);
+  document.getElementById('clientRisk').textContent = clientRisk;
+  document.getElementById('clientValue').textContent = formatMoney(clientValue);
 
-  // Current or Projected (i.e., previewHoldings)
-  const stVal = previewHoldings.stocks;
-  const boVal = previewHoldings.bonds;
-  const caVal = previewHoldings.cash;
-  const totalVal = stVal + boVal + caVal;
+  document.getElementById('targetStocks').textContent = (targetStocksPct * 100).toFixed(0);
+  document.getElementById('targetBonds').textContent  = (targetBondsPct  * 100).toFixed(0);
+  document.getElementById('targetCash').textContent   = (targetCashPct   * 100).toFixed(0);
+}
 
-  document.getElementById('curStocksVal').textContent = '$' + stVal.toFixed(2);
-  document.getElementById('curBondsVal').textContent = '$' + boVal.toFixed(2);
-  document.getElementById('curCashVal').textContent  = '$' + caVal.toFixed(2);
+/** Recalculate all columns (currentPct, finalDollar, finalPct, etc.) and update DOM & charts. */
+function recalcAndRender() {
+  // 1) Sum up all currentDollar, sum up all targetDollar, sum up all finalDollar
+  totalCurrent = assets.reduce((acc,a) => acc + a.currentDollar, 0);
+  totalTarget  = assets.reduce((acc,a) => acc + a.targetDollar,  0);
 
-  if (totalVal > 0) {
-    document.getElementById('curStocksPct').textContent = ((stVal / totalVal) * 100).toFixed(1) + '%';
-    document.getElementById('curBondsPct').textContent = ((boVal / totalVal) * 100).toFixed(1) + '%';
-    document.getElementById('curCashPct').textContent  = ((caVal / totalVal) * 100).toFixed(1) + '%';
-  } else {
-    document.getElementById('curStocksPct').textContent = '--';
-    document.getElementById('curBondsPct').textContent = '--';
-    document.getElementById('curCashPct').textContent  = '--';
-  }
+  // The finalDollar for each asset = currentDollar + proposedDollar
+  // We'll compute total final, then finalPct = finalDollar / totalFinal * 100
+  assets.forEach(a => {
+    a.finalDollar = a.currentDollar + a.proposedDollar;
+  });
+  totalFinal = assets.reduce((acc,a) => acc + a.finalDollar, 0);
 
-  // Update the table’s "Target (%)" fields
-  document.getElementById('tarStocksPct').textContent = (targetAllocation.stocks * 100).toFixed(1) + '%';
-  document.getElementById('tarBondsPct').textContent  = (targetAllocation.bonds * 100).toFixed(1) + '%';
-  document.getElementById('tarCashPct').textContent   = (targetAllocation.cash * 100).toFixed(1) + '%';
+  // 2) Now compute % columns
+  assets.forEach(a => {
+    a.currentPct = (totalCurrent > 0) ? (a.currentDollar / totalCurrent) * 100 : 0;
+    a.targetPct  = (totalTarget  > 0) ? (a.targetDollar  / totalTarget ) * 100 : 0;
+    // If user typed Proposed +/- in dollars, we convert that to a portfolio-based percentage:
+    // proposedPct = proposedDollar / totalCurrent * 100
+    a.proposedPct = (totalCurrent > 0) ? (a.proposedDollar / totalCurrent) * 100 : 0;
+    a.finalPct    = (totalFinal   > 0) ? (a.finalDollar   / totalFinal)   * 100 : 0;
+  });
 
-  // Update the charts
+  // 3) Render the table rows
+  renderPortfolioTable();
+
+  // 4) Update the Final Allocation chart (left) & Target Allocation (right)
   updateCharts();
 }
 
-// Called whenever we want to see a "preview" of the trades typed in
-function previewRebalance() {
-  // Parse the three trade fields
-  const stTrade = parseFloat(document.getElementById('tradeStocks').value) || 0;
-  const boTrade = parseFloat(document.getElementById('tradeBonds').value) || 0;
-  const caTrade = parseFloat(document.getElementById('tradeCash').value) || 0;
-  
-  // Sum of trades must be zero to be feasible
-  const sumTrades = stTrade + boTrade + caTrade;
+/** Populate the portfolio table's rows. */
+function renderPortfolioTable() {
+  const tbody = document.getElementById('portfolioRows');
+  tbody.innerHTML = ''; // clear old rows
 
-  // We'll show a partial preview only if the user’s trades net to 0
-  // and they do not exceed current holdings if negative
-  if (Math.abs(sumTrades) < 0.0001) {
-    // Check if the user sells more than they have
-    if ((stTrade < 0 && Math.abs(stTrade) > currentHoldings.stocks) ||
-        (boTrade < 0 && Math.abs(boTrade) > currentHoldings.bonds) ||
-        (caTrade < 0 && Math.abs(caTrade) > currentHoldings.cash)) {
-      // If invalid, just revert to actual current holdings
-      previewHoldings = { ...currentHoldings };
-      document.getElementById('tradeMessage').textContent = 'Error: Selling more than available.';
-    } else {
-      // Construct a projected holdings object
-      previewHoldings = {
-        stocks: currentHoldings.stocks + stTrade,
-        bonds:  currentHoldings.bonds + boTrade,
-        cash:   currentHoldings.cash + caTrade
-      };
-      document.getElementById('tradeMessage').textContent = 'Preview updated.';
+  assets.forEach((asset, idx) => {
+    const tr = document.createElement('tr');
+
+    // 1) Asset Class
+    const tdName = document.createElement('td');
+    tdName.textContent = asset.name;
+    tr.appendChild(tdName);
+
+    // 2) Current ($)
+    const tdCurrentDollar = document.createElement('td');
+    tdCurrentDollar.textContent = formatMoney(asset.currentDollar);
+    tr.appendChild(tdCurrentDollar);
+
+    // 3) Target ($)
+    const tdTargetDollar = document.createElement('td');
+    tdTargetDollar.textContent = formatMoney(asset.targetDollar);
+    tr.appendChild(tdTargetDollar);
+
+    // 4) Proposed +/- ($) [editable cell]
+    const tdProposedDollar = document.createElement('td');
+    tdProposedDollar.className = 'editable-cell';
+    tdProposedDollar.textContent = formatMoney(asset.proposedDollar);
+    tdProposedDollar.onclick = () => makeEditable(tdProposedDollar, idx, 'dollar');
+    tr.appendChild(tdProposedDollar);
+
+    // 5) Final ($)
+    const tdFinalDollar = document.createElement('td');
+    tdFinalDollar.textContent = formatMoney(asset.finalDollar);
+    tr.appendChild(tdFinalDollar);
+
+    // 6) Current (%)
+    const tdCurrentPct = document.createElement('td');
+    tdCurrentPct.textContent = asset.currentPct.toFixed(1) + '%';
+    tr.appendChild(tdCurrentPct);
+
+    // 7) Target (%)
+    const tdTargetPct = document.createElement('td');
+    tdTargetPct.textContent = asset.targetPct.toFixed(1) + '%';
+    tr.appendChild(tdTargetPct);
+
+    // 8) Proposed +/- (%) [editable cell]
+    const tdProposedPct = document.createElement('td');
+    tdProposedPct.className = 'editable-cell';
+    tdProposedPct.textContent = asset.proposedPct.toFixed(2) + '%';
+    tdProposedPct.onclick = () => makeEditable(tdProposedPct, idx, 'percent');
+    tr.appendChild(tdProposedPct);
+
+    // 9) Final (%)
+    const tdFinalPct = document.createElement('td');
+    tdFinalPct.textContent = asset.finalPct.toFixed(1) + '%';
+    tr.appendChild(tdFinalPct);
+
+    tbody.appendChild(tr);
+  });
+}
+
+/** Make a cell in Proposed +/- ($ or %) editable on single click. */
+function makeEditable(cell, assetIndex, mode) {
+  // mode is either 'dollar' or 'percent'
+  const oldValue = cell.textContent.replace(/[^0-9.-]/g, ''); 
+  // e.g. remove commas, $, and % to parse as float
+
+  cell.onclick = null; // disable re-click
+  cell.innerHTML = ''; // clear text
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.value = oldValue || '0';
+  // Auto-select the text
+  setTimeout(() => input.select(), 0);
+
+  // On blur or Enter, finalize
+  input.onblur = () => finishEdit(cell, input.value, assetIndex, mode);
+  input.onkeydown = (ev) => {
+    if (ev.key === 'Enter') {
+      ev.preventDefault();
+      input.blur();
     }
+  };
+
+  cell.appendChild(input);
+  input.focus();
+}
+
+/** Finalize user input in Proposed +/- cell, update data, recalc. */
+function finishEdit(cell, rawVal, assetIndex, mode) {
+  let newVal = parseFloat(rawVal) || 0;
+
+  // 1) If mode is 'dollar', we set proposedDollar = newVal
+  //    If mode is 'percent', we interpret newVal as "Proposed +/-(%) of total current portfolio"
+  //    => proposedDollar = (newVal / 100) * totalCurrent
+  if (mode === 'percent') {
+    const propDollar = (newVal / 100) * totalCurrent;
+    assets[assetIndex].proposedDollar = propDollar;
   } else {
-    // If trades don’t net to zero, revert to actual holdings
-    previewHoldings = { ...currentHoldings };
-    document.getElementById('tradeMessage').textContent = 'Trades must sum to zero to preview.';
+    // mode === 'dollar'
+    assets[assetIndex].proposedDollar = newVal;
   }
 
-  renderClientData();
+  // 2) Recalc the entire table
+  recalcAndRender();
+
+  // 3) Restore single-click event
+  if (mode === 'percent') {
+    const displayedPct = assets[assetIndex].proposedPct.toFixed(2) + '%';
+    cell.textContent = displayedPct;
+    cell.onclick = () => makeEditable(cell, assetIndex, 'percent');
+  } else {
+    const displayedDollar = formatMoney(assets[assetIndex].proposedDollar);
+    cell.textContent = displayedDollar;
+    cell.onclick = () => makeEditable(cell, assetIndex, 'dollar');
+  }
 }
 
-// Finalize the rebalance – actually update currentHoldings
-function rebalancePortfolio() {
-  // If the preview is valid, finalize it
-  currentHoldings = { ...previewHoldings };
-
-  // Re-render to confirm final state
-  renderClientData();
-
+/** Rebalance: does not reset proposed amounts per your request. */
+function doRebalance() {
   document.getElementById('tradeMessage').innerHTML =
-    '<span class="success">Success!</span> Portfolio rebalanced. Check the updated allocations above.';
-
-  resetTradeInputs();
+    '<span class="success">Rebalance triggered (but Proposed amounts not cleared).</span>';
 }
 
-// Reset the trade inputs to zero
-function resetTradeInputs() {
-  document.getElementById('tradeStocks').value = 0;
-  document.getElementById('tradeBonds').value = 0;
-  document.getElementById('tradeCash').value  = 0;
-  // Force a fresh preview
-  previewHoldings = { ...currentHoldings };
-  renderClientData();
+/** Reset all Proposed +/- columns to zero. */
+function doResetTrades() {
+  assets.forEach(a => {
+    a.proposedDollar = 0;
+  });
+  recalcAndRender();
+  document.getElementById('tradeMessage').textContent = 'All proposed trades reset to 0.';
 }
 
-// Chart.js initialization
-function initializeCharts() {
-  const ctxCurrent = document.getElementById('currentChart');
+/** Update the charts: left is "Final Allocation", right is "Target Allocation". */
+function updateCharts() {
+  const finalVals = assets.map(a => a.finalDollar);
+  const finalLabels = assets.map(a => a.name);
+
+  // The sum for final is totalFinal. We'll scale target by the same sum to visualize side by side.
+  // Or we can show the actual target $ share. But let's keep it consistent with how we've done it so far:
+  const targetVals = assets.map(a => a.targetDollar);
+
+  finalChart.data.labels = finalLabels;
+  finalChart.data.datasets[0].data = finalVals;
+  finalChart.update();
+
+  targetChart.data.labels = finalLabels;
+  targetChart.data.datasets[0].data = targetVals;
+  targetChart.update();
+}
+
+/** Format a dollar value with thousands separators, 2 decimals. */
+function formatMoney(value) {
+  return new Intl.NumberFormat('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }).format(value);
+}
+
+/** Initialize Chart.js. */
+function initCharts() {
+  const ctxFinal   = document.getElementById('finalChart');
   const ctxTarget  = document.getElementById('targetChart');
 
-  currentChart = new Chart(ctxCurrent, {
+  finalChart = new Chart(ctxFinal, {
     type: 'pie',
     data: {
-      labels: ['Stocks', 'Bonds', 'Cash'],
+      labels: [], // filled later
       datasets: [{
-        label: 'Current / Projected',
-        data: [0, 0, 0],
+        label: 'Final Allocation',
+        data: [],
         backgroundColor: ['#2196f3', '#8bc34a', '#ffc107']
       }]
     },
     options: {
       responsive: true,
-      maintainAspectRatio: true, /* fix endless growth */
+      maintainAspectRatio: true,
       plugins: {
         legend: { position: 'bottom' }
       }
@@ -442,10 +629,10 @@ function initializeCharts() {
   targetChart = new Chart(ctxTarget, {
     type: 'pie',
     data: {
-      labels: ['Stocks', 'Bonds', 'Cash'],
+      labels: [],
       datasets: [{
         label: 'Target Allocation',
-        data: [0, 0, 0],
+        data: [],
         backgroundColor: ['#2196f3', '#8bc34a', '#ffc107']
       }]
     },
@@ -459,45 +646,15 @@ function initializeCharts() {
   });
 }
 
-// Updates chart data for both current/projected and target
-function updateCharts() {
-  if (!currentChart || !targetChart) return;
-
-  // Preview holdings
-  const stVal = previewHoldings.stocks;
-  const boVal = previewHoldings.bonds;
-  const caVal = previewHoldings.cash;
-  const total = Math.max(stVal + boVal + caVal, 0);
-
-  // Current / Projected chart
-  currentChart.data.datasets[0].data = [stVal, boVal, caVal];
-  currentChart.update();
-
-  // Target chart: scale by total for a side-by-side comparison
-  targetChart.data.datasets[0].data = [
-    targetAllocation.stocks * total,
-    targetAllocation.bonds  * total,
-    targetAllocation.cash   * total
-  ];
-  targetChart.update();
-}
-
-// MAIN
+/** Main init */
 window.addEventListener('DOMContentLoaded', () => {
-  // 1) Initialize charts
-  initializeCharts();
+  initCharts();
 
-  // 2) Event listeners
   document.getElementById('newClientBtn').addEventListener('click', newRandomClient);
-  document.getElementById('rebalanceBtn').addEventListener('click', rebalancePortfolio);
-  document.getElementById('resetTradesBtn').addEventListener('click', resetTradeInputs);
+  document.getElementById('rebalanceBtn').addEventListener('click', doRebalance);
+  document.getElementById('resetTradesBtn').addEventListener('click', doResetTrades);
 
-  // Dynamically preview trades as user types
-  document.getElementById('tradeStocks').addEventListener('input', previewRebalance);
-  document.getElementById('tradeBonds').addEventListener('input', previewRebalance);
-  document.getElementById('tradeCash').addEventListener('input', previewRebalance);
-
-  // 3) Load the first client
+  // Generate the first client scenario
   newRandomClient();
 });
 </script>
