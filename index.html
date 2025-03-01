@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Portfolio Manager Simulator (Reordered Columns)</title>
+  <title>Portfolio Manager Simulator (Delta Enhancements)</title>
   <style>
     * {
       box-sizing: border-box;
@@ -47,7 +47,7 @@
       background: #0069d9;
     }
 
-    /* Client Profile Layout */
+    /* Client Profile */
     #client-profile {
       display: flex;
       justify-content: space-between;
@@ -109,6 +109,15 @@
     tfoot td {
       font-weight: bold;
     }
+
+    /* We will color positive deltas red and negative deltas green. */
+    .delta-positive {
+      color: red;
+    }
+    .delta-negative {
+      color: green;
+    }
+    /* zero => no special class => black */
 
     /* Charts */
     .charts-container {
@@ -201,7 +210,7 @@
       </div>
     </div>
 
-    <!-- NEW ORDER of 11 columns:
+    <!-- 11 columns (as before):
         1)  Asset
         2)  Current($)
         3)  Target($)
@@ -254,29 +263,33 @@
 </div>
 
 <div class="footer">
-  &copy; Revised Column Order with Delta
+  &copy; Delta Enhancements: Rounding &amp; Coloring
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 /**
- * We interpret Proposed(%) as a fraction of the entire portfolio value:
+ * Proposed(%) => Proposed($)= (Proposed(%)/100)* totalPortfolioValue
+ * Final($)= current($)+ proposed($)
+ * Final(%)= final($)/ totalPortfolioValue*100
  * 
- * Proposed($) = (Proposed(%) / 100) * totalPortfolioValue
- * Final($)    = Current($) + Proposed($)
- * Final(%)    = (Final($) / totalPortfolioValue) * 100
- * Delta($)    = Final($) - Target($)
- * Delta(%)    = Final(%) - Target(%)
- *
- * The table has a "Total" row that sums all relevant numeric columns,
- * except we skip the Delta($) and Delta(%) columns in the total row.
+ * Delta($)= final($) - target($)
+ * Delta(%)= final(%)- target(%)
+ * 
+ * - Round Delta(%) to 2 decimals, replacing any -0.00 with 0.00 
+ * - Color the Delta columns:
+ *    > 0 => red
+ *    < 0 => green
+ *    ==0 => black (default)
+ * - Include Delta in total row: sum of delta($) = sum(all final($)) - sum(all target($))
+ *                                 sum of delta(%) = sum(all final(%)) - sum(all target(%))
  */
 
 let totalPortfolioValue = 0;
 let assets = [];
 let finalChart, targetChart;
 
-/** Generate a random client. */
+/** Generate random client. */
 function generateRandomClient() {
   const names = ['John Smith','Jane Doe','Alex Johnson','Maria Garcia','Lee Wong'];
   const riskLevels = [
@@ -311,13 +324,10 @@ function newRandomClient() {
   let boPct= boShare/sum;
   let caPct= caShare/sum;
 
-  // row #1: Stocks
   let curSt= stPct* totalPortfolioValue;
   let tarSt= c.stockPct* totalPortfolioValue;
-  // row #2: Bonds
   let curBo= boPct* totalPortfolioValue;
   let tarBo= c.bondPct* totalPortfolioValue;
-  // row #3: Cash
   let curCa= caPct* totalPortfolioValue;
   let tarCa= c.cashPct* totalPortfolioValue;
 
@@ -357,7 +367,6 @@ function newRandomClient() {
     }
   ];
 
-  // Render client info
   document.getElementById('clientName').textContent = c.name;
   document.getElementById('clientRisk').textContent = c.risk;
   document.getElementById('clientValue').textContent = formatMoney(c.portfolioValue);
@@ -369,7 +378,7 @@ function newRandomClient() {
   renderTableAndCharts();
 }
 
-/** Re-render the table and charts. */
+/** Re-render table & charts. */
 function renderTableAndCharts(){
   const tbody= document.getElementById('portfolioRows');
   tbody.innerHTML='';
@@ -378,12 +387,10 @@ function renderTableAndCharts(){
   let sumCurrentPct=0, sumTargetPct=0, sumProposedPct=0, sumFinalPct=0;
 
   assets.forEach((a, idx)=>{
-    // Delta($)
-    const deltaDollar = a.finalDollar - a.targetDollar;
-    // Delta(%)
-    const deltaPct = a.finalPct - a.targetPct;
+    let deltaDollar = a.finalDollar - a.targetDollar; // final - target
+    let deltaPct    = a.finalPct - a.targetPct;       // final% - target%
 
-    // accumulate sums for total row (excluding delta columns)
+    // accumulate sums
     sumCurrentD   += a.currentDollar;
     sumTargetD    += a.targetDollar;
     sumProposedD  += a.proposedDollar;
@@ -395,73 +402,81 @@ function renderTableAndCharts(){
 
     const tr= document.createElement('tr');
 
-    // 1) Asset
+    // (1) Asset
     let tdName= document.createElement('td');
     tdName.textContent= a.name;
     tr.appendChild(tdName);
 
-    // 2) Current($)
+    // (2) Current($)
     let tdCurD= document.createElement('td');
     tdCurD.textContent= formatMoney(a.currentDollar);
     tr.appendChild(tdCurD);
 
-    // 3) Target($)
+    // (3) Target($)
     let tdTarD= document.createElement('td');
     tdTarD.textContent= formatMoney(a.targetDollar);
     tr.appendChild(tdTarD);
 
-    // 4) Proposed($) [editable]
+    // (4) Proposed($) [editable]
     let tdPropD= document.createElement('td');
     tdPropD.className='editable-cell';
     tdPropD.textContent= formatMoney(a.proposedDollar);
     tdPropD.onclick= ()=> makeEditable(tdPropD, idx, 'dollar');
     tr.appendChild(tdPropD);
 
-    // 5) Final($)
+    // (5) Final($)
     let tdFinD= document.createElement('td');
     tdFinD.textContent= formatMoney(a.finalDollar);
     tr.appendChild(tdFinD);
 
-    // 6) Delta($)
+    // (6) Delta($): color if positive => red, negative => green
     let tdDeltaD= document.createElement('td');
     tdDeltaD.textContent= formatMoney(deltaDollar);
+    colorDeltaCell(tdDeltaD, deltaDollar);
     tr.appendChild(tdDeltaD);
 
-    // 7) Current(%)
+    // (7) Current(%)
     let tdCurP= document.createElement('td');
     tdCurP.textContent= a.currentPct.toFixed(2)+'%';
     tr.appendChild(tdCurP);
 
-    // 8) Target(%)
+    // (8) Target(%)
     let tdTarP= document.createElement('td');
     tdTarP.textContent= a.targetPct.toFixed(2)+'%';
     tr.appendChild(tdTarP);
 
-    // 9) Proposed(%) [editable]
+    // (9) Proposed(%) [editable]
     let tdPropP= document.createElement('td');
     tdPropP.className='editable-cell';
     tdPropP.textContent= a.proposedPct.toFixed(2)+'%';
     tdPropP.onclick= ()=> makeEditable(tdPropP, idx, 'percent');
     tr.appendChild(tdPropP);
 
-    // 10) Final(%)
+    // (10) Final(%)
     let tdFinP= document.createElement('td');
     tdFinP.textContent= a.finalPct.toFixed(2)+'%';
     tr.appendChild(tdFinP);
 
-    // 11) Delta(%)
+    // (11) Delta(%): round to 0.01, no negative zero
     let tdDeltaP= document.createElement('td');
-    tdDeltaP.textContent= deltaPct.toFixed(2)+'%';
+    let dpVal = roundDeltaPct(deltaPct); // string like "1.25%"
+    tdDeltaP.textContent= dpVal;
+    colorDeltaCell(tdDeltaP, parseFloat(dpVal)); // parse the float portion to check sign
     tr.appendChild(tdDeltaP);
 
     tbody.appendChild(tr);
   });
 
-  // Build the totals row (excluding Delta columns: #6, #11).
+  // Build total row, including delta:
   const tfoot= document.getElementById('totalRow');
   tfoot.innerHTML='';
 
-  // We have 11 columns in total. We'll fill them accordingly:
+  // sumDeltaDollar = sumFinalD - sumTargetD
+  let sumDeltaDollar = sumFinalD - sumTargetD;
+  // sumDeltaPct    = sumFinalPct - sumTargetPct
+  let sumDeltaPct    = sumFinalPct - sumTargetPct;
+
+  // We have 11 columns
   // 1) "TOTAL"
   const col1= document.createElement('td');
   col1.textContent= 'TOTAL';
@@ -487,9 +502,10 @@ function renderTableAndCharts(){
   col5.textContent= formatMoney(sumFinalD);
   tfoot.appendChild(col5);
 
-  // 6) Delta($) => blank
+  // 6) Delta($) => color
   const col6= document.createElement('td');
-  col6.textContent= '';
+  col6.textContent= formatMoney(sumDeltaDollar);
+  colorDeltaCell(col6, sumDeltaDollar);
   tfoot.appendChild(col6);
 
   // 7) sum of Current(%)
@@ -512,16 +528,38 @@ function renderTableAndCharts(){
   col10.textContent= sumFinalPct.toFixed(2)+'%';
   tfoot.appendChild(col10);
 
-  // 11) Delta(%) => blank
+  // 11) Delta(%)
   const col11= document.createElement('td');
-  col11.textContent= '';
+  let sumDp= roundDeltaPct(sumDeltaPct);
+  col11.textContent= sumDp;
+  colorDeltaCell(col11, parseFloat(sumDp));
   tfoot.appendChild(col11);
 
-  // Finally update the charts
+  // Update charts
   updateCharts();
 }
 
-/** Single-click editing for Proposed($ or %). */
+/** Round Delta(%) to 2 decimals, replacing -0.00 with 0.00. */
+function roundDeltaPct(value){
+  // We'll do normal rounding to 2 decimals:
+  let r = parseFloat(value.toFixed(2));
+  // If it's extremely close to zero, force 0:
+  if(Math.abs(r) < 0.005) r=0;
+  // Return as string with 2 decimals and a % sign
+  return r.toFixed(2)+'%';
+}
+
+/** Color the cell red if val>0, green if val<0, black if val==0. */
+function colorDeltaCell(td, val){
+  // val might be e.g. 123.45 or -0.05
+  // If val>0 => red, if val<0 => green, else default
+  td.classList.remove('delta-positive','delta-negative');
+  if(val>0) td.classList.add('delta-positive');
+  else if(val<0) td.classList.add('delta-negative');
+  // 0 => no class => black
+}
+
+/** Editing Proposed($ or %). */
 function makeEditable(cell, assetIndex, mode){
   let oldVal= cell.textContent.replace(/[^\d.-]/g,'');
   cell.onclick=null;
@@ -546,11 +584,7 @@ function makeEditable(cell, assetIndex, mode){
 /** 
  * Proposed(%) => Proposed($)= (Proposed(%)/100)* totalPortfolioValue
  * Final($)= current($)+ proposed($)
- * Final(%)= final($)/ portfolioValue *100
- * 
- * Proposed($)=> Proposed(%)= (proposed($)/ portfolioValue)*100
- * Final($)= current($)+ proposed($)
- * Final(%)= final($)/ portfolioValue *100
+ * Final(%)= (final($)/ totalPortfolioValue)*100
  */
 function finishEdit(cell, rawVal, assetIndex, mode){
   let val= parseFloat(rawVal)||0;
@@ -571,7 +605,7 @@ function finishEdit(cell, rawVal, assetIndex, mode){
 
   renderTableAndCharts();
 
-  // restore the single-click
+  // restore single-click
   if(mode==='percent'){
     cell.textContent= row.proposedPct.toFixed(2)+'%';
     cell.onclick= ()=> makeEditable(cell, assetIndex, 'percent');
@@ -587,7 +621,7 @@ function doRebalance(){
     '<span class="success">Rebalance triggered (Proposed not cleared).</span>';
 }
 
-/** Reset => sets Proposed=0 => Final= Current. */
+/** Reset => sets Proposed=0 => Final= current. */
 function doResetTrades(){
   assets.forEach(a=>{
     a.proposedDollar=0;
@@ -599,7 +633,7 @@ function doResetTrades(){
   document.getElementById('tradeMessage').textContent='All proposed trades reset to 0.';
 }
 
-/** Update the two charts => target on the left, final on the right. */
+/** Update the two charts => left= target, right= final. */
 function updateCharts(){
   const tarVals= assets.map(a=> a.targetDollar);
   const finVals= assets.map(a=> a.finalDollar);
@@ -614,7 +648,7 @@ function updateCharts(){
   finalChart.update();
 }
 
-/** Format a number as money w/ commas, 2 decimals. */
+/** Format a number as money, 2 decimals, thousands separators. */
 function formatMoney(x){
   return new Intl.NumberFormat('en-US',{
     minimumFractionDigits:2,
@@ -622,7 +656,7 @@ function formatMoney(x){
   }).format(x);
 }
 
-/** Initialize the chart objects. */
+/** Initialize chart objects. */
 function initCharts(){
   targetChart= new Chart(document.getElementById('targetChart'),{
     type:'pie',
