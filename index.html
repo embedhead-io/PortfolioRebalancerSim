@@ -360,8 +360,8 @@ function generateRandomNestedData() {
     ]
   });
   // Bonds => direct positions
-  bonds.children.push(makePosition("Corp Bond A"));
-  bonds.children.push(makePosition("Gov Bond B"));
+  bonds.children.push(makePosition("    Corp Bond A"));
+  bonds.children.push(makePosition("    Gov Bond B"));
 
   root.children.push(stocks,bonds);
 }
@@ -532,13 +532,13 @@ function renderNode(node, level) {
   if(node.expanded && node.children && node.children.length>0) {
     node.children.forEach(ch => renderNode(ch, level+1));
     // Subtotal
-    let sTr=document.createElement('tr');
-    sTr.className='subtotal-row';
-    let sTd=document.createElement('td');
-    sTd.colSpan=11;
-    sTd.textContent=`[Subtotal] ${node.name}`;
-    sTr.appendChild(sTd);
-    document.getElementById('portfolioRows').appendChild(sTr);
+    // let sTr=document.createElement('tr');
+    // sTr.className='subtotal-row';
+    // let sTd=document.createElement('td');
+    // sTd.colSpan=11;
+    // sTd.textContent=`[Subtotal] ${node.name}`;
+    // sTr.appendChild(sTd);
+    // document.getElementById('portfolioRows').appendChild(sTr);
   }
 }
 
