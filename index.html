@@ -2,22 +2,52 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Portfolio Manager Simulator (Bug Fixes)</title>
+  <title>Portfolio Manager Simulator (Bug Fix + Dark Mode)</title>
   <style>
-    /* Landscape Layout */
+    /* 
+      LANDSCAPE LAYOUT 
+      plus Light/Dark mode toggling. 
+    */
+    :root {
+      /* Light Mode Colors (Default) */
+      --bg-body: #f8f9fa;
+      --bg-container: #fff;
+      --text-color: #000;
+      --header-footer-bg: #e9e9e9;
+      --asset-col-bg: #f7f7f7;
+      --proposed-col-border: #007bff;
+      --editable-field-border: #ccc;
+    }
+
+    /* Dark Mode overrides */
+    body.dark-mode {
+      --bg-body: #202020;     
+      --bg-container: #2c2c2c;
+      --text-color: #eee;
+      --header-footer-bg: #444;
+      --asset-col-bg: #333;
+      --proposed-col-border: #66afff;
+      --editable-field-border: #888;
+    }
+
+    /* Basic resets & layout */
     body {
       margin: 0;
       font-family: 'Helvetica Neue', Arial, sans-serif;
-      background: #f8f9fa;
       min-width: 1200px; /* wide layout */
+      background: var(--bg-body);
+      color: var(--text-color);
+      transition: background 0.3s, color 0.3s;
     }
+
     .container {
       max-width: 1200px;
       margin: 1rem auto;
       padding: 1.5rem;
-      background: #fff;
+      background: var(--bg-container);
       box-shadow: 0 0 10px rgba(0,0,0,0.05);
       border-radius: 5px;
+      transition: background 0.3s, color 0.3s;
     }
 
     h1, h2 {
@@ -30,6 +60,7 @@
       border-bottom: 1px solid #ddd;
       padding-bottom: 1rem;
     }
+
     .btn {
       padding: 0.4rem 0.8rem;
       border: none;
@@ -44,7 +75,36 @@
       background: #0069d9;
     }
 
-    /* Client Profile */
+    /* 
+      TINY DOT BUTTON FOR DARK MODE TOGGLE 
+      We'll position it absolutely at top-right for convenience.
+    */
+    .dark-mode-toggle {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #666;
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      cursor: pointer;
+      border: 2px solid #999;
+      transition: background 0.3s;
+    }
+    .dark-mode-toggle:hover {
+      background: #444;
+    }
+
+    /* In dark mode, let's invert the toggle dot color slightly. */
+    body.dark-mode .dark-mode-toggle {
+      background: #aaa;
+      border-color: #ccc;
+    }
+    body.dark-mode .dark-mode-toggle:hover {
+      background: #ccc;
+    }
+
+    /* Profile layout */
     #client-profile {
       display: flex;
       justify-content: space-between;
@@ -66,9 +126,13 @@
     /* Editable Portfolio Value */
     .editable-field {
       cursor: pointer;
-      border: 1px dotted #ccc;
+      border: 1px dotted var(--editable-field-border);
       padding: 2px 4px;
       background: #fafafa;
+      transition: border-color 0.3s;
+    }
+    body.dark-mode .editable-field {
+      background: #333;
     }
     .editable-field input {
       width: 80px;
@@ -96,12 +160,14 @@
       width: 100%;
       border-collapse: collapse;
       margin: 0.5rem 0;
+      transition: background 0.3s, color 0.3s;
     }
+
     thead th {
-      background: #e9e9e9; /* Slightly darkened header row */
+      background: var(--header-footer-bg); 
     }
     tfoot td {
-      background: #e9e9e9; /* Slightly darkened total row */
+      background: var(--header-footer-bg);
       font-weight: bold;
     }
     th, td {
@@ -110,15 +176,21 @@
       border-bottom: 1px solid #eee;
       vertical-align: middle;
     }
+
     td.asset-col {
-      background: #f7f7f7; /* Slightly darker for static asset column */
+      background: var(--asset-col-bg);
+      transition: background 0.3s;
     }
 
-    /* Proposed columns => dotted border */
+    /* Proposed columns => dotted border highlight. */
     .proposed-col {
-      border: 1px dotted #007bff;
+      border: 1px dotted var(--proposed-col-border);
       background: #fafafa;
       cursor: pointer;
+      transition: border-color 0.3s;
+    }
+    body.dark-mode .proposed-col {
+      background: #333;
     }
     .proposed-col input {
       border: 1px solid #007bff;
@@ -128,10 +200,10 @@
     }
 
     /*
-      Delta color logic: 
-       - If val>0 => red (bold)
-       - If val<0 => green (bold)
-       - If |val|<0.01 => 0 => black normal
+      Delta color logic:
+      - If abs(value) < 0.01 => zero => black normal
+      - If > 0 => red bold
+      - If < 0 => green bold
     */
     .delta-positive {
       color: red;
@@ -142,7 +214,7 @@
       font-weight: bold;
     }
 
-    /* 3 smaller charts for Current, Target, Final */
+    /* 3 smaller charts for Current, Target, Final side by side. */
     .charts-container {
       display: flex;
       gap: 1rem;
@@ -153,14 +225,18 @@
     .chart-box {
       flex: 1;
       min-width: 250px;
-      max-width: 300px; /* smaller */
-      max-height: 300px;/* smaller */
+      max-width: 300px;
+      max-height: 300px;
       position: relative;
       margin: auto;
       background: #f9f9f9;
       border-radius: 4px;
       padding: 1rem;
       text-align: center;
+      transition: background 0.3s;
+    }
+    body.dark-mode .chart-box {
+      background: #333;
     }
     .chart-title {
       margin-bottom: 0.5rem;
@@ -175,7 +251,8 @@
       text-align: center;
       margin-top: 2rem;
       font-size: 0.85rem;
-      color: #666;
+      color: var(--text-color);
+      transition: color 0.3s;
     }
     .success {
       color: green;
@@ -188,6 +265,9 @@
   </style>
 </head>
 <body>
+
+<!-- Dot button for Dark Mode Toggle -->
+<div class="dark-mode-toggle" id="darkModeToggle"></div>
 
 <div class="container">
   <h1>Portfolio Manager Simulator</h1>
@@ -236,7 +316,7 @@
       </div>
     </div>
 
-    <!-- Table with 11 columns -->
+    <!-- 11 columns -->
     <table id="portfolioTable">
       <thead>
         <tr>
@@ -259,7 +339,6 @@
       </tfoot>
     </table>
 
-    <!-- 3 Charts: Current, Target, Final -->
     <div class="charts-container">
       <div class="chart-box">
         <div class="chart-title">Current Allocation</div>
@@ -280,7 +359,7 @@
 </div>
 
 <div class="footer">
-  &copy; Next iteration with bug fixes: zero deltas, sign notation, and total cell color
+  &copy; Enhanced with copy/paste fix &amp; Dark Mode
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -294,13 +373,22 @@ let userStockPct=0.5, userBondPct=0.4, userCashPct=0.1;
 
 let currentChart, targetChart, finalChart;
 
+/**
+ * Dark Mode Toggle:
+ * Clicking the #darkModeToggle dot toggles body.dark-mode
+ */
+const darkToggle = document.getElementById('darkModeToggle');
+darkToggle.addEventListener('click', () => {
+  document.body.classList.toggle('dark-mode');
+});
+
 /** Generate random client => random portfolioValue (rounded to nearest 100). */
 function generateRandomClient() {
   const names = ['John Smith','Jane Doe','Alex Johnson','Maria Garcia','Lee Wong'];
   const randName= names[Math.floor(Math.random()* names.length)];
 
   let raw= 80000 + Math.random()*40000;
-  let rounded= Math.round(raw/100)*100; // nearest 100
+  let rounded= Math.round(raw/100)*100;
 
   return {
     name: randName,
@@ -452,7 +540,7 @@ function renderTableAndCharts() {
 
     // 6) Delta($)
     const tdDeltaD= document.createElement('td');
-    tdDeltaD.textContent= withSignMoney(deltaDollar); // includes comma separators + sign
+    tdDeltaD.textContent= withSignMoney(deltaDollar);
     colorDeltaCell(tdDeltaD, deltaDollar);
     tr.appendChild(tdDeltaD);
 
@@ -494,59 +582,47 @@ function renderTableAndCharts() {
   let sumDeltaDollar= sumTargetD - sumFinalD;
   let sumDeltaPct   = sumTargetPct - sumFinalPct;
 
-  // 1) "TOTAL"
   const col1= document.createElement('td');
-  // No 'asset-col' => we want same color as the header/total row => #e9e9e9
   col1.textContent= 'TOTAL';
   tfoot.appendChild(col1);
 
-  // 2) sumCurrentD
   const col2= document.createElement('td');
   col2.textContent= formatMoney(sumCurrentD);
   tfoot.appendChild(col2);
 
-  // 3) sumTargetD
   const col3= document.createElement('td');
   col3.textContent= formatMoney(sumTargetD);
   tfoot.appendChild(col3);
 
-  // 4) sumProposedD
   const col4= document.createElement('td');
   col4.textContent= formatMoney(sumProposedD);
   tfoot.appendChild(col4);
 
-  // 5) sumFinalD
   const col5= document.createElement('td');
   col5.textContent= formatMoney(sumFinalD);
   tfoot.appendChild(col5);
 
-  // 6) sumDeltaDollar => with sign, with comma
   const col6= document.createElement('td');
   col6.textContent= withSignMoney(sumDeltaDollar);
   colorDeltaCell(col6, sumDeltaDollar);
   tfoot.appendChild(col6);
 
-  // 7) sumCurrentPct
   const col7= document.createElement('td');
   col7.textContent= sumCurrentPct.toFixed(2)+'%';
   tfoot.appendChild(col7);
 
-  // 8) sumTargetPct
   const col8= document.createElement('td');
   col8.textContent= sumTargetPct.toFixed(2)+'%';
   tfoot.appendChild(col8);
 
-  // 9) sumProposedPct
   const col9= document.createElement('td');
   col9.textContent= sumProposedPct.toFixed(2)+'%';
   tfoot.appendChild(col9);
 
-  // 10) sumFinalPct
   const col10= document.createElement('td');
   col10.textContent= sumFinalPct.toFixed(2)+'%';
   tfoot.appendChild(col10);
 
-  // 11) sumDeltaPct => with sign
   const col11= document.createElement('td');
   col11.textContent= withSignPct(sumDeltaPct);
   colorDeltaCell(col11, sumDeltaPct);
@@ -555,13 +631,17 @@ function renderTableAndCharts() {
   updateCharts();
 }
 
-/** Single-click editing. */
+/** Single-click editing with a fix for copy-paste of commas. */
 function editProposedCell(cell, assetIndex, mode){
-  let oldVal= cell.textContent.replace(/[^\d.-]/g,'');
+  let oldVal= cell.textContent;
+  // If user copy/pastes from a Delta cell, e.g. "-1,484.84"
+  // We want to remove commas or extraneous characters:
+  oldVal= oldVal.replace(/,/g,'');            // remove commas
+  oldVal= oldVal.replace(/[^\d\.\-+]/g,'');   // keep digits, decimal, sign
   cell.onclick= null;
   cell.innerHTML= '';
 
-  let input= document.createElement('input');
+  const input= document.createElement('input');
   input.type='text';
   input.value= oldVal||'0';
   setTimeout(()=> input.select(),0);
@@ -577,11 +657,17 @@ function editProposedCell(cell, assetIndex, mode){
   input.focus();
 }
 
-/** finish Proposed => recalc final. */
+/** 
+ * finish Proposed => parse float => recalc final.
+ * We also remove commas from rawVal before parse, in case user pasted them again here.
+ */
 function finishProposedEdit(cell, rawVal, idx, mode){
+  // remove commas
+  rawVal= rawVal.replace(/,/g,'');
+  // parse
   let val= parseFloat(rawVal)||0;
-  let row= assets[idx];
 
+  let row= assets[idx];
   if(mode==='percent'){
     row.proposedPct= val;
     row.proposedDollar= (val/100)* totalPortfolioValue;
@@ -602,7 +688,7 @@ function finishProposedEdit(cell, rawVal, idx, mode){
   }
 }
 
-/** Reset => original scenario. */
+/** Reset => revert original scenario. */
 function doResetTrades(){
   assets= JSON.parse(JSON.stringify(originalAssets));
   totalPortfolioValue= originalPortfolioValue;
@@ -611,45 +697,41 @@ function doResetTrades(){
   renderTableAndCharts();
 }
 
-/** color logic => if abs(val) < 0.01 => black normal, val>0 => red bold, val<0 => green bold. */
+/** color logic => if abs(val)< 0.01 => zero => black normal, if>0 => red bold, if<0 => green bold. */
 function colorDeltaCell(td, val){
   td.classList.remove('delta-positive','delta-negative');
   let r= parseFloat(val.toFixed(2));
   if(Math.abs(r)<0.01){
     // zero => black normal => do nothing
-  } else if(r>0){
+  } else if(r>0) {
     td.classList.add('delta-positive');
   } else {
     td.classList.add('delta-negative');
   }
 }
 
-/** withSignMoney => sign + comma formatting + 2 decimals.  If abs<0.01 => 0 => black. */
+/** withSignMoney => sign + comma formatting. */
 function withSignMoney(value){
-  // Round to 2 decimals
   let r= parseFloat(value.toFixed(2));
-  if(Math.abs(r)<0.01) r=0;
-
-  // Format absolute value w/ commas
-  let absStr= formatMoney(Math.abs(r));
-
+  if(Math.abs(r)<0.01) r=0; // treat as zero
+  let absVal= Math.abs(r);
+  let absStr= formatMoney(absVal);
   if(r>0) return `+${absStr}`;
   else if(r<0) return `-${absStr}`;
   else return absStr; // "0.00"
 }
 
-/** withSignPct => sign + 2 decimals + "%" */
+/** withSignPct => sign + "xx.xx%" */
 function withSignPct(value){
   let r= parseFloat(value.toFixed(2));
-  if(Math.abs(r)<0.01) r=0;
-
-  let absStr= Math.abs(r).toFixed(2);
-  if(r>0) return `+${absStr}%`;
-  else if(r<0) return `-${absStr}%`;
+  if(Math.abs(r)<0.01) r=0; 
+  let absVal= Math.abs(r).toFixed(2);
+  if(r>0) return `+${absVal}%`;
+  else if(r<0) return `-${absVal}%`;
   else return `0.00%`;
 }
 
-/** update 3 charts => current, target, final. */
+/** update the 3 charts => current, target, final. */
 function updateCharts(){
   const labels= assets.map(a=> a.name);
 
@@ -672,75 +754,9 @@ function updateCharts(){
   finalChart.update();
 }
 
-/** read riskSelect => set userStockPct/bondPct/cashPct => update text. */
-function readRiskDropdown(){
-  const val= document.getElementById('riskSelect').value;
-  if(val==='conservative'){
-    userStockPct=0.3; userBondPct=0.5; userCashPct=0.2;
-  } else if(val==='aggressive'){
-    userStockPct=0.7; userBondPct=0.2; userCashPct=0.1;
-  } else {
-    // moderate
-    userStockPct=0.5; userBondPct=0.4; userCashPct=0.1;
-  }
-  document.getElementById('targetStocks').textContent= (userStockPct*100).toFixed(0);
-  document.getElementById('targetBonds').textContent= (userBondPct*100).toFixed(0);
-  document.getElementById('targetCash').textContent= (userCashPct*100).toFixed(0);
-}
-
-/** scale entire scenario if user edits portfolioValue. */
-(function enablePortfolioValueEdit(){
-  const valSpan= document.getElementById('clientValue');
-  valSpan.addEventListener('click', function onClick(){
-    let oldValStr= valSpan.textContent.replace(/[^\d.-]/g,'');
-    let oldVal= parseFloat(oldValStr)||0;
-
-    valSpan.onclick= null;
-    valSpan.innerHTML= '';
-
-    let inp= document.createElement('input');
-    inp.type='text';
-    inp.value= oldValStr||'0';
-    setTimeout(()=> inp.select(),0);
-
-    inp.onblur= ()=> finishVal(inp.value, oldVal);
-    inp.onkeydown= (ev)=>{
-      if(ev.key==='Enter'){
-        ev.preventDefault();
-        inp.blur();
-      }
-    };
-    valSpan.appendChild(inp);
-    inp.focus();
-
-    function finishVal(newStr, oldVal){
-      let newVal= parseFloat(newStr)||0;
-      if(newVal<=0) newVal= oldVal;
-      newVal= Math.round(newVal/100)*100; // nearest 100
-
-      if(Math.abs(newVal- oldVal)> 0.00001 && oldVal>0){
-        let scale= newVal/ oldVal;
-        totalPortfolioValue= newVal;
-        assets.forEach(a=>{
-          a.currentDollar  *= scale;
-          a.targetDollar   *= scale;
-          a.proposedDollar *= scale;
-          a.finalDollar    *= scale;
-
-          a.currentPct= (a.currentDollar/ newVal)*100;
-          a.targetPct= (a.targetDollar/ newVal)*100;
-          a.proposedPct=(a.proposedDollar/ newVal)*100;
-          a.finalPct= (a.finalDollar/ newVal)*100;
-        });
-        renderTableAndCharts();
-      }
-      valSpan.textContent= formatMoney(newVal);
-      valSpan.onclick= onClick;
-    }
-  });
-})();
-
-/** On DOMContentLoaded => init charts => risk => newClient => done. */
+/** 
+ * On page load => init charts, wire up events, default moderate => new client => done.
+ */
 window.addEventListener('DOMContentLoaded', ()=>{
   initCharts();
 
@@ -751,7 +767,6 @@ window.addEventListener('DOMContentLoaded', ()=>{
   document.getElementById('newClientBtn').addEventListener('click', newRandomClient);
   document.getElementById('resetTradesBtn').addEventListener('click', doResetTrades);
 
-  // default moderate
   readRiskDropdown();
   newRandomClient();
 });
@@ -810,7 +825,9 @@ function initCharts(){
   });
 }
 
-/** format with comma separators, 2 decimals. */
+/** 
+ * Format money => thousands separators, 2 decimals.
+ */
 function formatMoney(x){
   return new Intl.NumberFormat('en-US',{
     minimumFractionDigits:2,
