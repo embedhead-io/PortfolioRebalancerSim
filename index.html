@@ -90,10 +90,14 @@
 
     /* Profile layout */
     #client-profile {
-      display: flex; justify-content: space-between; flex-wrap: wrap;
+      display: flex; 
+      justify-content: space-between; 
+      flex-wrap: wrap;
     }
     .profile-info {
-      flex: 1; min-width: 320px; margin-right: 1rem;
+      flex: 1; 
+      min-width: 320px; 
+      margin-right: 1rem;
     }
     .profile-actions { margin-top: 1rem; }
     #riskSelect { margin-left: 0.5rem; }
@@ -261,9 +265,6 @@
       </div>
     </div>
 
-    <!-- Updated column order: swap “Total($)” and “Delta($)”? 
-         Actually, we rename old "Final($)" to "Total($)" 
-         Then Delta($). Same for % columns. -->
     <table id="portfolioTable">
       <thead>
         <tr>
@@ -385,8 +386,9 @@ function roundTo100(x) {
  * 4) Summation from bottom up
  ***************************************************************/
 function aggregateNode(node) {
+  // If leaf => position
   if(!node.children || node.children.length===0) {
-    // if position => total= current+ proposed
+    // if position => total = current + proposed
     node.totalDollar= node.currentDollar+ (node.proposedDollar||0);
     return;
   }
@@ -415,8 +417,8 @@ function computePercentages(node, rootRef) {
 
   node.currentPct= (node.currentDollar / rc)*100;
   node.targetPct=  (node.targetDollar  / rt)*100;
-  node.totalPct=  (node.totalDollar   / rtot)*100;
-  node.proposedPct= (node.proposedDollar/ rc)*100;
+  node.totalPct=   (node.totalDollar   / rtot)*100;
+  node.proposedPct=(node.proposedDollar/ rc)*100;
 
   if(node.children && node.children.length>0){
     node.children.forEach(ch => computePercentages(ch,rootRef));
@@ -425,7 +427,6 @@ function computePercentages(node, rootRef) {
 
 /***************************************************************
  * 5) Table Rendering
- * New column order: Proposed($)->Total($)->Delta($)
  ***************************************************************/
 function renderTable() {
   const tb=document.getElementById('portfolioRows');
@@ -478,12 +479,12 @@ function renderNode(node, level) {
   tdProp.onclick= ()=> editProposedCell(tdProp, node, 'dollar');
   tr.appendChild(tdProp);
 
-  // Total($) => rename final($) => total($)
+  // Total($)
   let tdTot=document.createElement('td');
   tdTot.textContent= formatMoney(node.totalDollar||0);
   tr.appendChild(tdTot);
 
-  // Delta($) => target - total
+  // Delta($) = target - total
   let dval=(node.targetDollar||0)-(node.totalDollar||0);
   let tdDelta=document.createElement('td');
   tdDelta.textContent= withSignMoney(dval);
@@ -518,7 +519,7 @@ function renderNode(node, level) {
   tdTotPct.textContent= tp.toFixed(2)+"%";
   tr.appendChild(tdTotPct);
 
-  // Delta(%)= target% - total%
+  // Delta(%)
   let dp=(node.targetPct||0)-(node.totalPct||0);
   let tdDeltaPct=document.createElement('td');
   tdDeltaPct.textContent= withSignPct(dp);
@@ -599,9 +600,9 @@ function finishProposedEdit(cell, node, rawVal, mode) {
  * 7) Recalc & Rerender
  ***************************************************************/
 function renderAll() {
-  // aggregator bottom-up
-  aggregator(root);
-  // compute absolute % 
+  // Fix #1: Use the existing aggregateNode() function
+  aggregateNode(root);
+  // compute absolute %
   computePercentages(root, root);
   // build table
   renderTable();
@@ -611,14 +612,9 @@ function renderAll() {
 
 /***************************************************************
  * 8) Changing Risk => Adjust top-level target distribution
- *    so e.g. "Stocks" gets userStockPct * totalPortfolioValue,
- *           "Bonds" gets userBondPct * total, etc.
  ***************************************************************/
 function applyRiskAllocation() {
   // we do a simple approach: look for top-level child named "Stocks", "Bonds", "Cash"
-  // if found, set child.targetDollar= fraction * totalPortfolioValue
-  // or if the user has more than 3 assets, we do partial approach.
-
   let tVal= totalPortfolioValue;
   let stocksVal= userStockPct * tVal;
   let bondsVal = userBondPct  * tVal;
@@ -632,7 +628,7 @@ function applyRiskAllocation() {
     } else if(/cash/i.test(ch.name)) {
       ch.targetDollar= cashVal;
     } 
-    // else might remain the same or 0. 
+    // else might remain the same or 0
   });
 }
 
@@ -646,6 +642,7 @@ function onRiskChange() {
   } else if(val==="aggressive"){
     userStockPct=0.7; userBondPct=0.2; userCashPct=0.1;
   } else {
+    // moderate
     userStockPct=0.5; userBondPct=0.4; userCashPct=0.1;
   }
   document.getElementById('targetStocks').textContent=(userStockPct*100).toFixed(0);
@@ -724,7 +721,6 @@ function initCharts() {
 
 // We'll sum the top-level child nodes for each chart
 function updateCharts() {
-  // gather top-level children
   let labels=[], curVals=[], tarVals=[], totVals=[];
   root.children.forEach(ch => {
     labels.push(ch.name);
@@ -789,11 +785,46 @@ function formatMoney(x){
 }
 
 /***************************************************************
- * 13) Startup
+ * 13) Enable Editing of Portfolio Value (clientValue)
+ ***************************************************************/
+function enablePortfolioValueEdit() {
+  const valElem = document.getElementById('clientValue');
+  valElem.addEventListener('click', function onClick() {
+    // turn the span into an input
+    const oldVal = valElem.textContent.replace(/,/g,'').replace(/[^\d.\-+]/g,'');
+    valElem.innerHTML = '';  // clear span
+
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.value = oldVal || '0';
+
+    input.onblur = function() {
+      const parsed = parseFloat(input.value.replace(/,/g,'')) || 0;
+      totalPortfolioValue = parsed;
+      valElem.innerHTML = formatMoney(parsed);
+
+      // Re-apply risk & re-render 
+      onRiskChange();
+    };
+
+    input.onkeydown = function(e) {
+      if(e.key === 'Enter') {
+        e.preventDefault();
+        input.blur();
+      }
+    };
+
+    valElem.appendChild(input);
+    input.select();
+  });
+}
+
+/***************************************************************
+ * 14) Startup
  ***************************************************************/
 window.addEventListener('DOMContentLoaded',()=>{
   initCharts();
-  enablePortfolioValueEdit();
+  enablePortfolioValueEdit();  // Fix #2: Define and call this function
 
   // risk select
   document.getElementById('riskSelect').addEventListener('change',onRiskChange);
