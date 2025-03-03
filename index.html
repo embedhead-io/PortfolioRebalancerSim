@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
-  <title>Portfolio Manager Simulator – Revised</title>
+  <title>Portfolio Manager Simulator – Final Fixes</title>
   <style>
     /*********************************************************
      * LIGHT vs. DARK theme
@@ -180,6 +180,7 @@
       transition: background 0.3s;
     }
 
+    /* Proposed => dotted border, clickable. */
     .proposed-col {
       border: 1px dotted var(--proposed-col-border);
       background: #fafafa;
@@ -198,13 +199,13 @@
       font-weight: bold; 
     }
 
-    /* Delta => pos => red, neg => green, zero => black */
+    /* Delta => negative => red, positive => green, zero => black. */
     .delta-positive { 
-      color: red;   
+      color: green; 
       font-weight: bold; 
     }
     .delta-negative { 
-      color: green; 
+      color: red; 
       font-weight: bold; 
     }
 
@@ -276,7 +277,6 @@
       color: red;   
       font-weight: bold; 
     }
-
   </style>
 </head>
 <body>
@@ -547,6 +547,7 @@ function renderNode(node, level) {
   let tdProp = document.createElement('td');
   tdProp.className = 'proposed-col';
   let pd = node.proposedDollar || 0;
+  // color code if positive/negative
   if(Math.abs(pd) > 0.01) {
     if(pd > 0) tdProp.classList.add('proposed-positive');
     else       tdProp.classList.add('proposed-negative');
@@ -560,7 +561,7 @@ function renderNode(node, level) {
   tdTot.textContent = formatMoney(node.totalDollar||0);
   tr.appendChild(tdTot);
 
-  // Delta($) = target - total
+  // Delta($) = (target - total)
   let dval = (node.targetDollar||0) - (node.totalDollar||0);
   let tdDelta = document.createElement('td');
   tdDelta.textContent = withSignMoney(dval);
@@ -621,8 +622,8 @@ function buildTotalRow() {
   let pDollar = root.proposedDollar  || 0;
   let totDollar = root.totalDollar   || 0;
 
-  let dval = tDollar - totDollar; // $ delta
-  let dpct = (root.targetPct || 0) - (root.totalPct || 0); // % delta
+  let dval = tDollar - totDollar; 
+  let dpct = (root.targetPct || 0) - (root.totalPct || 0);
 
   let tr = document.createElement('tr');
 
@@ -743,7 +744,6 @@ function applyRiskAllocation() {
   let bondsVal  = userBondPct  * tVal;
   let cashVal   = userCashPct  * tVal;
 
-  // Set top-level parent's target
   root.children.forEach(ch => {
     if (/stock/i.test(ch.name)) {
       ch.targetDollar = stocksVal;
@@ -755,8 +755,6 @@ function applyRiskAllocation() {
       ch.targetDollar = 0; 
     }
   });
-
-  // Now distribute parent's target to children
   root.children.forEach(ch => {
     distributeTargets(ch);
   });
@@ -790,7 +788,6 @@ function onRiskChange() {
   document.getElementById('targetBonds').textContent  = (userBondPct*100).toFixed(0);
   document.getElementById('targetCash').textContent   = (userCashPct*100).toFixed(0);
 
-  // now apply these to the top-level target distribution
   applyRiskAllocation();
   renderAll();
 }
@@ -813,32 +810,24 @@ function doGenerateNewClient() {
   // build random nested
   generateRandomNestedData();
 
-  // Now we want the sum of all leaves' currentDollar to exactly match totalPortfolioValue.
-  // 1) First aggregator to get a raw sum in root.currentDollar
+  // Scale entire portfolio so sum of current = totalPortfolioValue
   aggregateNode(root);
-  // 2) If sum is different from totalPortfolioValue, scale
   let sumCur = root.currentDollar || 1;
   let ratio  = totalPortfolioValue / sumCur;
-
   scaleNode(root, ratio);
-
-  // aggregator again, so child values reflect the new scaled amounts
   aggregateNode(root);
 
-  // store original copy for reset
   originalData = JSON.parse(JSON.stringify(root));
   originalPortfolioValue = val;
 
-  // apply risk top-down
   applyRiskAllocation();
   renderAll();
 }
 
-/** Scale every leaf node's currentDollar & targetDollar by ratio */
 function scaleNode(node, ratio) {
   if(!node.children || node.children.length === 0) {
     node.currentDollar = Math.round(node.currentDollar * ratio);
-    node.targetDollar  = Math.round(node.targetDollar * ratio);
+    node.targetDollar  = Math.round(node.targetDollar  * ratio);
     return;
   }
   node.children.forEach(ch => scaleNode(ch, ratio));
@@ -937,6 +926,35 @@ function updateCharts() {
 /***************************************************************
  * 12) Utility
  ***************************************************************/
+/** 
+ * Formats a number as US-style currency, e.g. 1902 => "1,902.00"
+ */
+function formatMoney(x){
+  return new Intl.NumberFormat('en-US', {
+    style: 'decimal',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }).format(x);
+}
+
+/**
+ * Delta sign: negative => red, positive => green, zero => black
+ * (We invert the classes from the earlier code so that negative is red.)
+ */
+function colorDeltaCell(td, val){
+  td.classList.remove('delta-positive','delta-negative');
+  let r = parseFloat(val.toFixed(2));
+  if(Math.abs(r) < 0.01) {
+    // zero => black
+  } else if(r < 0) {
+    // negative => red
+    td.classList.add('delta-negative');
+  } else {
+    // positive => green
+    td.classList.add('delta-positive');
+  }
+}
+
 function withSignMoney(value){
   let r= parseFloat(value.toFixed(2));
   if(Math.abs(r)<0.01) r=0;
@@ -954,26 +972,6 @@ function withSignPct(value){
   if(r>0)  return `+${absVal}%`;
   if(r<0)  return `-${absVal}%`;
   return "0.00%";
-}
-
-// Delta color => positive => red, negative => green, zero => black
-function colorDeltaCell(td, val){
-  td.classList.remove('delta-positive','delta-negative');
-  let r= parseFloat(val.toFixed(2));
-  if(Math.abs(r)<0.01) {
-    // zero => default/black
-  } else if(r>0) {
-    td.classList.add('delta-positive');
-  } else {
-    td.classList.add('delta-negative');
-  }
-}
-
-function formatMoney(x){
-  return new Intl.NumberFormat('en-US',{
-    minimumFractionDigits:2,
-    maximumFractionDigits:2
-  }).format(x);
 }
 
 /***************************************************************
