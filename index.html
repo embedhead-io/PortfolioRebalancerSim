@@ -43,6 +43,7 @@
       margin-top: 0;
       margin-bottom: 0.75rem;
     }
+    /* Dark mode toggle remains unchanged */
     .dark-mode-toggle {
       width: 20px; 
       height: 20px;
@@ -65,6 +66,7 @@
     body.dark-mode .dark-mode-toggle:hover {
       background: #ccc;
     }
+    /* Buttons styling remains unchanged */
     .btn {
       padding: 0.4rem 0.8rem;
       border: none;
@@ -78,12 +80,7 @@
     .btn:hover {
       background: #0069d9;
     }
-    .section {
-      margin-bottom: 1.5rem;
-      border-bottom: 1px solid #ddd;
-      padding-bottom: 1rem;
-    }
-    /* Profile layout */
+    /* Profile layout – no changes here */
     #client-profile {
       display: flex; 
       justify-content: space-between; 
@@ -97,10 +94,17 @@
     .profile-actions { 
       margin-top: 1rem; 
     }
-    #riskSelect { 
-      margin-left: 0.5rem; 
+    /* Style the select element to have a blue background and white text */
+    select {
+      background-color: #007bff;
+      color: #fff;
+      border: none;
+      padding: 0.3rem 0.5rem;
+      border-radius: 3px;
+      font-size: 0.9rem;
+      margin-left: 0.3rem;
     }
-    /* Editable Portfolio Value */
+    /* Editable Portfolio Value styling */
     .editable-field {
       cursor: pointer;
       border: 1px dotted var(--editable-field-border);
@@ -119,10 +123,10 @@
       box-sizing: border-box;
       text-align: right;
     }
-    /* Table & expansions */
+    /* Table styling */
     table {
       width: 100%;
-      table-layout: fixed; 
+      table-layout: fixed;
       border-collapse: collapse;
       margin: 0.5rem 0;
       transition: background 0.3s, color 0.3s;
@@ -134,10 +138,11 @@
       padding: 0.4rem;
       border-bottom: 1px solid #eee;
       vertical-align: middle;
-      text-align: right;  
-      overflow: hidden;  
+      text-align: right;
+      overflow: hidden;
       white-space: nowrap;
     }
+    /* Set consistent column widths */
     thead th:nth-child(1)  { width: 14%; text-align: left; }
     thead th:nth-child(2)  { width: 8%; }
     thead th:nth-child(3)  { width: 8%; }
@@ -150,7 +155,7 @@
     thead th:nth-child(10) { width: 8%; }
     thead th:nth-child(11) { width: 8%; }
     th:first-child, td:first-child {
-      text-align: left; 
+      text-align: left;
     }
     .asset-col {
       background: var(--asset-col-bg);
@@ -163,30 +168,30 @@
       cursor: pointer;
       transition: border-color 0.3s;
     }
-    body.dark-mode .proposed-col { 
-      background: #333; 
+    body.dark-mode .proposed-col {
+      background: #333;
     }
-    .proposed-positive { 
-      color: green; 
-      font-weight: bold; 
+    .proposed-positive {
+      color: green;
+      font-weight: bold;
     }
-    .proposed-negative { 
-      color: red; 
-      font-weight: bold; 
+    .proposed-negative {
+      color: red;
+      font-weight: bold;
     }
-    /* Delta: negative => red, positive => green, zero => black */
-    .delta-positive { 
-      color: green; 
-      font-weight: bold; 
+    /* Delta styling */
+    .delta-positive {
+      color: green;
+      font-weight: bold;
     }
-    .delta-negative { 
-      color: red; 
-      font-weight: bold; 
+    .delta-negative {
+      color: red;
+      font-weight: bold;
     }
     /* TOTAL row styling to match header row */
     .total-row {
-      background: var(--header-footer-bg); 
-      font-weight: bold; 
+      background: var(--header-footer-bg);
+      font-weight: bold;
       text-align: right;
     }
     .total-row td {
@@ -196,62 +201,59 @@
     .total-row td:first-child {
       text-align: left;
     }
-    /* Charts */
+    /* Charts styling */
     .charts-container {
-      display: flex; 
-      gap: 1rem; 
-      margin-top: 1rem; 
-      flex-wrap: wrap; 
+      display: flex;
+      gap: 1rem;
+      margin-top: 1rem;
+      flex-wrap: wrap;
       justify-content: space-evenly;
     }
     .chart-box {
-      flex: 1; 
-      min-width: 250px; 
-      max-width: 300px; 
-      max-height: 300px; 
-      position: relative; 
-      margin: auto; 
-      background: #f9f9f9; 
-      border-radius: 4px; 
-      padding: 1rem; 
+      flex: 1;
+      min-width: 250px;
+      max-width: 300px;
+      max-height: 300px;
+      position: relative;
+      margin: auto;
+      background: #f9f9f9;
+      border-radius: 4px;
+      padding: 1rem;
       text-align: center;
       transition: background 0.3s;
     }
-    body.dark-mode .chart-box { 
-      background: #333; 
+    body.dark-mode .chart-box {
+      background: #333;
     }
     .chart-title {
-      margin-bottom: 0.5rem; 
+      margin-bottom: 0.5rem;
       font-weight: bold;
     }
     .chart-box canvas {
-      width: 100% !important; 
+      width: 100% !important;
       height: 100% !important;
     }
     .footer {
-      text-align: center; 
-      margin-top: 2rem; 
-      font-size: 0.85rem; 
+      text-align: center;
+      margin-top: 2rem;
+      font-size: 0.85rem;
       transition: color 0.3s;
       color: var(--text-color);
     }
-    .success { 
-      color: green; 
-      font-weight: bold; 
+    .success {
+      color: green;
+      font-weight: bold;
     }
-    .error { 
-      color: red; 
-      font-weight: bold; 
+    .error {
+      color: red;
+      font-weight: bold;
     }
   </style>
 </head>
 <body>
-
 <div class="dark-mode-toggle" id="darkModeToggle"></div>
-
 <div class="container">
   <h1>Portfolio Manager Simulator – Percentages Aligned</h1>
-
   <!-- Client Profile -->
   <div class="section" id="client-profile">
     <div class="profile-info">
@@ -279,7 +281,6 @@
       </div>
     </div>
   </div>
-
   <!-- Table & Charts -->
   <div class="section">
     <div class="portfolio-header">
@@ -288,7 +289,6 @@
         <button class="btn" id="resetTradesBtn">Reset Trades</button>
       </div>
     </div>
-
     <table id="portfolioTable">
       <thead>
         <tr>
@@ -307,7 +307,6 @@
       </thead>
       <tbody id="portfolioRows"></tbody>
     </table>
-
     <div class="charts-container">
       <div class="chart-box">
         <div class="chart-title">Current Allocation</div>
@@ -322,15 +321,12 @@
         <canvas id="finalChart"></canvas>
       </div>
     </div>
-
     <p id="tradeMessage"></p>
   </div>
 </div>
-
 <div class="footer">
   &copy; Example – Percentage Fix
 </div>
-
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 /***************************************************************
@@ -365,12 +361,10 @@ darkToggle.addEventListener('click', () => {
  ***************************************************************/
 function generateRandomNestedData() {
   root.children = [];
-
   let stocks = { name: "Stocks", isAsset: true, expanded: false, children: [] };
   let bonds  = { name: "Bonds",  isAsset: true, expanded: false, children: [] };
   let cash   = { name: "Cash",   isAsset: true, expanded: false, children: [] };
 
-  // Stocks => 2 classes
   stocks.children.push({
     name: "Large Cap",
     isClass: true,
@@ -389,14 +383,9 @@ function generateRandomNestedData() {
       makePosition("FIZZ")
     ]
   });
-
-  // Bonds => direct positions
   bonds.children.push(makePosition("Corp Bond A"));
   bonds.children.push(makePosition("Gov Bond B"));
-
-  // For Cash
   cash.currentDollar = roundTo100(3000 + Math.random() * 2000);
-
   root.children.push(stocks, bonds, cash);
 }
 
@@ -851,11 +840,9 @@ function updateCharts() {
   currentChart.data.labels = labels;
   currentChart.data.datasets[0].data = curVals;
   currentChart.update();
-
   targetChart.data.labels = labels;
   targetChart.data.datasets[0].data = tarVals;
   targetChart.update();
-
   finalChart.data.labels = labels;
   finalChart.data.datasets[0].data = totVals;
   finalChart.update();
@@ -876,7 +863,7 @@ function colorDeltaCell(td, val) {
   td.classList.remove('delta-positive', 'delta-negative');
   let r = parseFloat(val.toFixed(2));
   if (Math.abs(r) < 0.01) {
-    // zero
+    // zero => black
   } else if (r < 0) {
     td.classList.add('delta-negative');
   } else {
@@ -918,7 +905,7 @@ function enablePortfolioValueEdit() {
       const parsed = parseFloat(input.value.replace(/,/g, '')) || 0;
       totalPortfolioValue = parsed;
       valElem.innerHTML = formatMoney(parsed);
-      onRiskChange();
+      onRiskChange(); // re-apply risk settings after value change
     };
     input.onkeydown = function(e) {
       if (e.key === 'Enter') {
@@ -940,8 +927,7 @@ window.addEventListener('DOMContentLoaded', () => {
   document.getElementById('riskSelect').addEventListener('change', onRiskChange);
   document.getElementById('newClientBtn').addEventListener('click', doGenerateNewClient);
   document.getElementById('resetTradesBtn').addEventListener('click', doResetTrades);
-  
-  // Startup order: first, onRiskChange() then doGenerateNewClient()
+  // Startup: call onRiskChange then doGenerateNewClient to populate everything
   onRiskChange();
   doGenerateNewClient();
 });
