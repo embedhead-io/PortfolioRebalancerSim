@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
-  <title>Portfolio Manager Simulator – Proposed Edit Logic</title>
+  <title>Portfolio Manager Simulator – Final Fixes</title>
   <style>
     :root {
       --bg-body: #f8f9fa;
@@ -144,7 +144,7 @@
       overflow: hidden;  
       white-space: nowrap;
     }
-    /* Force consistent column widths for all 11 columns */
+    /* Force consistent column widths */
     thead th:nth-child(1)  { width: 14%; text-align: left; }
     thead th:nth-child(2)  { width: 8%; }
     thead th:nth-child(3)  { width: 8%; }
@@ -158,7 +158,7 @@
     thead th:nth-child(11) { width: 8%; }
 
     th:first-child, td:first-child {
-      text-align: left; /* left-align only the first column */
+      text-align: left; /* only the first column is left-aligned */
     }
 
     .asset-col {
@@ -205,19 +205,20 @@
     .position-row td { 
       padding-left: 4em; 
     }
-
-    /* total-row styling to match header row */
-    .total-row {
-      background: var(--header-footer-bg); 
+    .subtotal-row td {
       font-weight: bold; 
+      background: #f0f0f0;
+    }
+
+    /* Match header row */
+    .total-row {
+      background: var(--header-footer-bg);  /* Same as header */
+      font-weight: bold; 
+      text-align: right;
     }
     .total-row td {
-      border-top: 2px solid #ccc; /* top border for separation */
-      text-align: right; 
-      padding: 8px;
-    }
-    .total-row td:first-child {
-      text-align: left; 
+      border-top: 2px solid #ccc; /* Adds a clear top border to separate it */
+      padding: 8px; /* Slightly more padding for a balanced look */
     }
 
     /* 3 smaller charts side by side */
@@ -275,7 +276,7 @@
 <div class="dark-mode-toggle" id="darkModeToggle"></div>
 
 <div class="container">
-  <h1>Portfolio Manager Simulator – Proposed Logic</h1>
+  <h1>Portfolio Manager Simulator – Final Fixes</h1>
 
   <!-- Client Profile -->
   <div class="section" id="client-profile">
@@ -330,6 +331,7 @@
           <th>Delta (%)</th>
         </tr>
       </thead>
+      <!-- All rows, including TOTAL, go into the same <tbody> -->
       <tbody id="portfolioRows"></tbody>
     </table>
 
@@ -353,14 +355,14 @@
 </div>
 
 <div class="footer">
-  &copy; Proposed Logic Example
+  &copy; Example – Final Fix
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-/********************************************************************
- * 1) Data Model
- ********************************************************************/
+/***************************************************************
+ * Data Model
+ ***************************************************************/
 let root = {
   name: "ROOT",
   expanded: true,
@@ -376,17 +378,17 @@ let userStockPct=0.5, userBondPct=0.4, userCashPct=0.1; // default moderate
 
 let currentChart, targetChart, finalChart; // the 3 charts
 
-/********************************************************************
- * 2) Dark Mode Toggle
- ********************************************************************/
+/***************************************************************
+ * Dark Mode Toggle
+ ***************************************************************/
 const darkToggle= document.getElementById('darkModeToggle');
 darkToggle.addEventListener('click', () => {
   document.body.classList.toggle('dark-mode');
 });
 
-/********************************************************************
- * 3) Generate Random Data
- ********************************************************************/
+/***************************************************************
+ * Generate Random Data
+ ***************************************************************/
 function generateRandomNestedData() {
   root.children = [];
 
@@ -395,25 +397,24 @@ function generateRandomNestedData() {
   let cash   = { name: "Cash",   isAsset:true, expanded:false, children: [] };
 
   // Stocks => 2 classes
-  let largeCap = {
-    name: "Large Cap",
-    isClass: true,
-    expanded: false,
+  stocks.children.push({
+    name: "Large Cap", 
+    isClass: true, 
+    expanded: false, 
     children: [
-      makePosition("AAPL"),
+      makePosition("AAPL"), 
       makePosition("MSFT")
     ]
-  };
-  let smallCap = {
-    name: "Small Cap",
-    isClass: true,
-    expanded: false,
+  });
+  stocks.children.push({
+    name: "Small Cap", 
+    isClass: true, 
+    expanded: false, 
     children: [
-      makePosition("RGEN"),
+      makePosition("RGEN"), 
       makePosition("FIZZ")
     ]
-  };
-  stocks.children.push(largeCap, smallCap);
+  });
 
   // Bonds => direct positions
   bonds.children.push(makePosition("Corp Bond A"));
@@ -422,11 +423,10 @@ function generateRandomNestedData() {
   // For Cash
   cash.currentDollar = roundTo100(3000 + Math.random()*2000);
 
-  // Assemble
+  // Add them
   root.children.push(stocks, bonds, cash);
 }
 
-// Helper to build a leaf
 function makePosition(ticker) {
   let cur = 3000 + Math.random()*9000;
   let tar = cur + (Math.random()-0.5)*2000;
@@ -437,26 +437,16 @@ function makePosition(ticker) {
     currentDollar: roundTo100(cur),
     targetDollar:  roundTo100(tar),
     proposedDollar: 0,
-    totalDollar: 0,
+    totalDollar: 0
   };
 }
 function roundTo100(x) {
   return Math.round(x/100)*100;
 }
 
-/********************************************************************
- * 4) Assign parent references so we can bubble up changes
- ********************************************************************/
-function assignParents(node, parent=null) {
-  node.parent = parent;
-  if(node.children && node.children.length>0) {
-    node.children.forEach(ch => assignParents(ch, node));
-  }
-}
-
-/********************************************************************
- * 5) Aggregation
- ********************************************************************/
+/***************************************************************
+ * Aggregation (bottom-up)
+ ***************************************************************/
 function aggregateNode(node) {
   if(!node.children || node.children.length===0) {
     node.totalDollar = (node.currentDollar || 0) + (node.proposedDollar || 0);
@@ -487,21 +477,21 @@ function computePercentages(node, rootRef) {
   node.proposedPct  = (node.proposedDollar / rc)*100;
 
   if(node.children && node.children.length>0){
-    node.children.forEach(ch => computePercentages(ch, rootRef));
+    node.children.forEach(ch => computePercentages(ch,rootRef));
   }
 }
 
-/********************************************************************
- * 6) Table Rendering
- ********************************************************************/
+/***************************************************************
+ * Table Rendering
+ ***************************************************************/
 function renderTable() {
   const tb = document.getElementById('portfolioRows');
   tb.innerHTML = "";
 
-  // Render each top-level child
+  // Render each top-level asset
   root.children.forEach(asset => renderNode(asset, 0));
 
-  // Then total row last
+  // Then our total row last
   buildTotalRow();  
 }
 
@@ -511,10 +501,12 @@ function renderNode(node, level) {
   else if(node.isPosition) tr.classList.add('position-row');
   else if(node.isAsset)    tr.classList.add('asset-row');
 
+  // Name cell
   let tdName = document.createElement('td');
   if(node.isAsset) {
     tdName.className = 'asset-col';
   }
+
   // Expand toggler if children
   if(node.children && node.children.length>0) {
     let toggler = document.createElement('span');
@@ -548,8 +540,7 @@ function renderNode(node, level) {
     else       tdProp.classList.add('proposed-negative');
   }
   tdProp.textContent = formatMoney(pd);
-  // Single-click => edit
-  tdProp.onclick = ()=> editProposedCell(tdProp, node);
+  tdProp.onclick = ()=> editProposedCell(tdProp, node, 'dollar');
   tr.appendChild(tdProp);
 
   // Total($)
@@ -583,8 +574,7 @@ function renderNode(node, level) {
     else     tdPropPct.classList.add('proposed-negative');
   }
   tdPropPct.textContent = pp.toFixed(2)+"%";
-  // Single-click => edit in % mode? (Optional)
-  tdPropPct.onclick = ()=> editProposedCell(tdPropPct, node, true); 
+  tdPropPct.onclick = ()=> editProposedCell(tdPropPct, node, 'percent');
   tr.appendChild(tdPropPct);
 
   // Total(%)
@@ -602,67 +592,81 @@ function renderNode(node, level) {
 
   document.getElementById('portfolioRows').appendChild(tr);
 
-  // If expanded, show children
+  // If expanded, render children
   if(node.expanded && node.children && node.children.length>0) {
     node.children.forEach(ch => renderNode(ch, level+1));
   }
 }
 
-function buildTotalRow() {
+/***************************************************************
+ * The "TOTAL PORTFOLIO" row => appended last in same <tbody>
+ ***************************************************************/
+ function buildTotalRow() {
   const tb = document.getElementById('portfolioRows');
 
-  let cDollar   = root.currentDollar   || 0;
-  let tDollar   = root.targetDollar    || 0;
-  let pDollar   = root.proposedDollar  || 0;
-  let totDollar = root.totalDollar     || 0;
+  let cDollar = root.currentDollar   || 0;
+  let tDollar = root.targetDollar    || 0;
+  let pDollar = root.proposedDollar  || 0;
+  let totDollar = root.totalDollar   || 0;
 
   let dval = tDollar - totDollar; 
   let dpct = (root.targetPct || 0) - (root.totalPct || 0);
 
   let tr = document.createElement('tr');
-  tr.classList.add('total-row');
+  tr.classList.add('total-row');  // Apply special styling
 
+  // 1) Label
   let tdLabel = document.createElement('td');
-  tdLabel.textContent = "TOTAL PORTFOLIO";
+  tdLabel.textContent = "Total Portfolio";
   tr.appendChild(tdLabel);
 
+  // 2) Current($)
   let tdCurr = document.createElement('td');
   tdCurr.textContent = formatMoney(cDollar);
   tr.appendChild(tdCurr);
 
+  // 3) Target($)
   let tdTarg = document.createElement('td');
   tdTarg.textContent = formatMoney(tDollar);
   tr.appendChild(tdTarg);
 
+  // 4) Proposed($)
   let tdProp = document.createElement('td');
   tdProp.textContent = formatMoney(pDollar);
   tr.appendChild(tdProp);
 
+  // 5) Total($)
   let tdTot = document.createElement('td');
   tdTot.textContent = formatMoney(totDollar);
   tr.appendChild(tdTot);
 
+  // 6) Delta($)
   let tdDelta = document.createElement('td');
   tdDelta.textContent = withSignMoney(dval);
   colorDeltaCell(tdDelta, dval);
   tr.appendChild(tdDelta);
 
+  // 7) Current(%)
   let tdCurrPct = document.createElement('td');
   tdCurrPct.textContent = (root.currentPct || 0).toFixed(2)+"%";
   tr.appendChild(tdCurrPct);
 
+  // 8) Target(%)
   let tdTargPct = document.createElement('td');
   tdTargPct.textContent = (root.targetPct || 0).toFixed(2)+"%";
   tr.appendChild(tdTargPct);
 
+  // 9) Proposed(%)
   let tdPropPct = document.createElement('td');
   tdPropPct.textContent = (root.proposedPct || 0).toFixed(2)+"%";
   tr.appendChild(tdPropPct);
 
+  // 10) Total(%)
   let tdTotPct = document.createElement('td');
   tdTotPct.textContent = (root.totalPct || 0).toFixed(2)+"%";
   tr.appendChild(tdTotPct);
 
+  // 11) Delta(%)
   let tdDeltaPct = document.createElement('td');
   tdDeltaPct.textContent = withSignPct(dpct);
   colorDeltaCell(tdDeltaPct, dpct);
@@ -671,11 +675,12 @@ function buildTotalRow() {
   tb.appendChild(tr);
 }
 
-/********************************************************************
- * 7) Proposed Cell Editing => 2-Way Updating
- ********************************************************************/
-function editProposedCell(cell, node, isPercent=false) {
-  let oldVal = cell.textContent.replace(/,/g,'').replace(/[^\d.\-+]/g,'');
+/***************************************************************
+ * Proposed Cell Editing => Single-click
+ ***************************************************************/
+function editProposedCell(cell, node, mode) {
+  let oldVal = cell.textContent;
+  oldVal = oldVal.replace(/,/g,'').replace(/[^\d.\-+]/g,'');
   cell.onclick = null;
   cell.innerHTML = '';
 
@@ -684,7 +689,7 @@ function editProposedCell(cell, node, isPercent=false) {
   input.value = oldVal || '0';
   setTimeout(()=> input.select(),0);
 
-  input.onblur = () => finishProposedEdit(cell, node, input.value, isPercent);
+  input.onblur = ()=> finishProposedEdit(cell, node, input.value, mode);
   input.onkeydown = (ev)=>{
     if(ev.key === 'Enter'){
       ev.preventDefault();
@@ -695,77 +700,32 @@ function editProposedCell(cell, node, isPercent=false) {
   input.focus();
 }
 
-function finishProposedEdit(cell, node, rawVal, isPercent) {
+function finishProposedEdit(cell, node, rawVal, mode) {
   rawVal = rawVal.replace(/,/g,'');
-  let val = parseFloat(rawVal)||0;
-  if(isPercent) {
-    // Proposed = val% of root.currentDollar
-    let rc = (root.currentDollar > 0 ? root.currentDollar : 1);
-    val = (val/100) * rc;
+  let val = parseFloat(rawVal) || 0;
+
+  if(mode === 'percent') {
+    let rc = (root.currentDollar>0? root.currentDollar:1);
+    node.proposedDollar = (val/100)* rc;
+  } else {
+    node.proposedDollar = val;
   }
-  applyProposedValue(node, val);   // <=== The new logic
   renderAll();
 }
 
-/********************************************************************
- * 8) KEY LOGIC: applyProposedValue => handle up/down updates
- ********************************************************************/
-function applyProposedValue(node, val) {
-  // 1) Set this node's proposed
-  node.proposedDollar = val;
-
-  // 2) If node has children => distribute down
-  if(node.children && node.children.length>0) {
-    distributeProposedDown(node);
-  }
-
-  // 3) Then bubble up
-  bubbleUpProposed(node);
-}
-
-function distributeProposedDown(node) {
-  let sumCurrent = node.children.reduce((acc, ch) => acc+(ch.currentDollar||0), 0);
-  if(sumCurrent<1) sumCurrent=1; 
-  node.children.forEach(ch => {
-    let ratio = (ch.currentDollar||0)/ sumCurrent;
-    ch.proposedDollar = ratio * node.proposedDollar;
-    if(ch.children && ch.children.length>0) {
-      distributeProposedDown(ch);
-    }
-  });
-}
-
-function bubbleUpProposed(node) {
-  let p = node.parent;
-  if(!p) return; 
-  if(!p.children || p.children.length===0) return;
-
-  let sum=0;
-  p.children.forEach(ch => {
-    sum += (ch.proposedDollar||0);
-  });
-  p.proposedDollar = sum;
-
-  // continue up
-  bubbleUpProposed(p);
-}
-
-/********************************************************************
- * 9) Recalc & Rerender
- ********************************************************************/
+/***************************************************************
+ * Recalc & Rerender
+ ***************************************************************/
 function renderAll() {
-  // aggregator => compute total from bottom up
   aggregateNode(root);
-  // compute % 
   computePercentages(root, root);
-  // re-render
   renderTable();
   updateCharts();
 }
 
-/********************************************************************
- * 10) Distributing Risk (Top-Down for Target)
- ********************************************************************/
+/***************************************************************
+ * Distributing Risk (Top-Down)
+ ***************************************************************/
 function applyRiskAllocation() {
   let tVal = totalPortfolioValue;
   let stocksVal = userStockPct * tVal;
@@ -783,7 +743,9 @@ function applyRiskAllocation() {
       ch.targetDollar = 0; 
     }
   });
-  root.children.forEach(ch => distributeTargets(ch));
+  root.children.forEach(ch => {
+    distributeTargets(ch);
+  });
 }
 
 function distributeTargets(node) {
@@ -797,9 +759,9 @@ function distributeTargets(node) {
   });
 }
 
-/********************************************************************
- * 11) SHIFTING RISK on <select>
- ********************************************************************/
+/***************************************************************
+ * SHIFTING RISK on <select>
+ ***************************************************************/
 function onRiskChange() {
   let val = document.getElementById('riskSelect').value;
   if(val==="conservative") {
@@ -817,11 +779,10 @@ function onRiskChange() {
   renderAll();
 }
 
-/********************************************************************
- * 12) Generating & Scaling to Match Portfolio Value
- ********************************************************************/
+/***************************************************************
+ * Generating & Scaling to Match Portfolio Value
+ ***************************************************************/
 function doGenerateNewClient() {
-  // random name
   const names = ["John Smith","Jane Doe","Alex Johnson","Maria Garcia","Lee Wong"];
   let n = names[Math.floor(Math.random()* names.length)];
   clientName = n;
@@ -832,11 +793,8 @@ function doGenerateNewClient() {
   totalPortfolioValue = val;
   document.getElementById('clientValue').textContent = formatMoney(val);
 
-  // build random nested
+  // random nested
   generateRandomNestedData();
-
-  // assign parents
-  assignParents(root);
 
   // scale sum of current = totalPortfolioValue
   aggregateNode(root);
@@ -848,10 +806,7 @@ function doGenerateNewClient() {
   originalData = JSON.parse(JSON.stringify(root));
   originalPortfolioValue = val;
 
-  // We will NOT call onRiskChange yet. We'll wait until after data is created.
-  // Then the user can pick a risk or keep the default. 
-  // But let's do a first renderAll so we have some data on screen.
-
+  applyRiskAllocation();
   renderAll();
 }
 
@@ -869,18 +824,14 @@ function doResetTrades() {
     root = JSON.parse(JSON.stringify(originalData));
     totalPortfolioValue = originalPortfolioValue;
     document.getElementById('clientValue').textContent = formatMoney(totalPortfolioValue);
-
-    // re-assign parents because we reloaded from JSON
-    assignParents(root);
-
     renderAll();
     document.getElementById('tradeMessage').textContent="Reset to initial scenario.";
   }
 }
 
-/********************************************************************
- * 13) Chart init & update
- ********************************************************************/
+/***************************************************************
+ * Chart init & update
+ ***************************************************************/
 function initCharts() {
   currentChart= new Chart(document.getElementById('currentChart'), {
     type:'pie',
@@ -955,9 +906,9 @@ function updateCharts() {
   finalChart.update();
 }
 
-/********************************************************************
- * 14) Utility
- ********************************************************************/
+/***************************************************************
+ * Utility
+ ***************************************************************/
 function formatMoney(x){
   return new Intl.NumberFormat('en-US', {
     style: 'decimal',
@@ -972,8 +923,10 @@ function colorDeltaCell(td, val){
   if(Math.abs(r) < 0.01) {
     // zero => black
   } else if(r < 0) {
+    // negative => red
     td.classList.add('delta-negative');
   } else {
+    // positive => green
     td.classList.add('delta-positive');
   }
 }
@@ -997,9 +950,9 @@ function withSignPct(value){
   return "0.00%";
 }
 
-/********************************************************************
- * 15) Enable Editing of Portfolio Value
- ********************************************************************/
+/***************************************************************
+ * Enable Editing of Portfolio Value (clientValue)
+ ***************************************************************/
 function enablePortfolioValueEdit() {
   const valElem = document.getElementById('clientValue');
   valElem.addEventListener('click', function onClick() {
@@ -1014,7 +967,7 @@ function enablePortfolioValueEdit() {
       const parsed = parseFloat(input.value.replace(/,/g,'')) || 0;
       totalPortfolioValue = parsed;
       valElem.innerHTML = formatMoney(parsed);
-      onRiskChange(); 
+      onRiskChange(); // re-apply risk
     };
 
     input.onkeydown = function(e) {
@@ -1029,9 +982,9 @@ function enablePortfolioValueEdit() {
   });
 }
 
-/********************************************************************
- * 16) Startup
- ********************************************************************/
+/***************************************************************
+ * Startup
+ ***************************************************************/
 window.addEventListener('DOMContentLoaded', () => {
   initCharts();
   enablePortfolioValueEdit();  
@@ -1040,7 +993,8 @@ window.addEventListener('DOMContentLoaded', () => {
   document.getElementById('newClientBtn').addEventListener('click', doGenerateNewClient);
   document.getElementById('resetTradesBtn').addEventListener('click', doResetTrades);
 
-  // CHANGED: We FIRST create data, THEN user can pick risk if they want
+  // Start
+  onRiskChange();
   doGenerateNewClient();
 });
 </script>
