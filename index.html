@@ -104,13 +104,14 @@
     #riskSelect { 
       margin-left: 0.5rem; 
     }
-
+    /* Numeric input for Cash Target (%) */
     #cashTargetInput {
       width: 50px;
       text-align: right;
       margin-left: 0.5rem;
     }
 
+    /* Editable Portfolio Value */
     .editable-field {
       cursor: pointer;
       border: 1px dotted var(--editable-field-border);
@@ -133,7 +134,7 @@
     /* Table & expansions */
     table {
       width: 100%;
-      table-layout: fixed;
+      table-layout: fixed; 
       border-collapse: collapse;
       margin: 0.5rem 0;
       transition: background 0.3s, color 0.3s;
@@ -149,6 +150,7 @@
       overflow: hidden;  
       white-space: nowrap;
     }
+    /* 11 columns: Name + 5 for dollars + 5 for percents */
     thead th:nth-child(1)  { width: 14%; text-align: left; }
     thead th:nth-child(2)  { width: 8%; }
     thead th:nth-child(3)  { width: 8%; }
@@ -160,6 +162,7 @@
     thead th:nth-child(9)  { width: 8%; }
     thead th:nth-child(10) { width: 8%; }
     thead th:nth-child(11) { width: 8%; }
+
     th:first-child, td:first-child {
       text-align: left; 
     }
@@ -186,6 +189,8 @@
       color: red; 
       font-weight: bold; 
     }
+
+    /* Delta => negative => red, positive => green, zero => black. */
     .delta-positive { 
       color: green; 
       font-weight: bold; 
@@ -210,6 +215,7 @@
       font-weight: bold; 
       background: #f0f0f0;
     }
+
     .total-row {
       background: var(--header-footer-bg);
       font-weight: bold;
@@ -220,6 +226,7 @@
       padding: 8px;
     }
 
+    /* 3 smaller charts side by side */
     .charts-container {
       display: flex; 
       gap: 1rem; 
@@ -271,7 +278,6 @@
 </head>
 <body>
 
-<!-- Dark Mode Toggle -->
 <div class="dark-mode-toggle" id="darkModeToggle"></div>
 
 <div class="container">
@@ -304,8 +310,7 @@
         <input type="number" id="cashTargetInput" value="10" min="0" max="100" step="1"/>
       </p>
       <div class="profile-actions">
-        <!-- Use type="button" so they don't act like submit buttons -->
-        <button type="button" class="btn" id="newClientBtn">Generate New Client</button>
+        <button class="btn" id="newClientBtn">Generate New Client</button>
       </div>
     </div>
   </div>
@@ -315,7 +320,7 @@
     <div class="portfolio-header">
       <h2>Current (or Projected) Portfolio</h2>
       <div class="portfolio-buttons">
-        <button type="button" class="btn" id="resetTradesBtn">Reset Trades</button>
+        <button class="btn" id="resetTradesBtn">Reset Trades</button>
       </div>
     </div>
 
@@ -495,6 +500,7 @@ function computePercentages(node, rootRef) {
 
 /***************************************************************
  * Distribute Proposed($) Down
+ * Based on child.currentDollar ratio
  ***************************************************************/
 function distributeProposedDown(node) {
   if (!node.children || node.children.length === 0) return;
@@ -503,12 +509,13 @@ function distributeProposedDown(node) {
   node.children.forEach(ch => {
     let ratio = (ch.currentDollar || 0) / sumCur;
     ch.proposedDollar = ratio * node.proposedDollar;
-    distributeProposedDown(ch);
+    distributeProposedDown(ch); // recurse deeper
   });
 }
 
 /***************************************************************
  * Bubble Proposed($) Up
+ * Sum children's Proposed($) => parent's Proposed($)
  ***************************************************************/
 function bubbleUpProposed(node) {
   if (!node.parent) return;
@@ -520,15 +527,18 @@ function bubbleUpProposed(node) {
 
 /***************************************************************
  * Set Proposed($) for a node
+ * - If node has children => distributeProposedDown
+ * - Otherwise => bubbleUpProposed
+ * - Then re-render
  ***************************************************************/
 function applyProposedValue(node, val) {
   node.proposedDollar = val;
 
-  // If node has children => distributeProposedDown
   if (node.children && node.children.length > 0) {
+    // top-down distribution
     distributeProposedDown(node);
   }
-  // Bubble up
+  // bottom-up update
   bubbleUpProposed(node);
 
   renderAll();
@@ -577,7 +587,7 @@ function renderNode(node, level) {
   tdTar.textContent = formatMoney(node.targetDollar || 0);
   tr.appendChild(tdTar);
 
-  // 3) Delta($)
+  // 3) Delta($) => (target - total)
   let dval = (node.targetDollar || 0) - (node.totalDollar || 0);
   let tdDelta = document.createElement('td');
   tdDelta.textContent = withSignMoney(dval);
@@ -588,11 +598,13 @@ function renderNode(node, level) {
   let tdProp = document.createElement('td');
   tdProp.className = 'proposed-col';
   let pd = node.proposedDollar || 0;
+  // highlight positive/negative
   if (Math.abs(pd) > 0.01) {
     if (pd > 0) tdProp.classList.add('proposed-positive');
     else        tdProp.classList.add('proposed-negative');
   }
   tdProp.textContent = formatMoney(pd);
+  // user can click to edit Proposed($)
   tdProp.onclick = () => editProposedCell(tdProp, node, 'dollar');
   tr.appendChild(tdProp);
 
@@ -627,6 +639,7 @@ function renderNode(node, level) {
     else        tdPropPct.classList.add('proposed-negative');
   }
   tdPropPct.textContent = pp.toFixed(2) + "%";
+  // user can click to edit Proposed(%)
   tdPropPct.onclick = () => editProposedCell(tdPropPct, node, 'percent');
   tr.appendChild(tdPropPct);
 
@@ -736,11 +749,14 @@ function finishProposedEdit(cell, node, rawVal, mode) {
   let val = parseFloat(rawVal);
   if (isNaN(val)) val = 0;
 
+  // Proposed(%) -> fraction of root.targetDollar
   if (mode === 'percent') {
+    // clamp if too large in demonstration
     if (val > 200) val = 200;
     let rt = (root.targetDollar > 0 ? root.targetDollar : 1);
     applyProposedValue(node, (val / 100) * rt);
   } else {
+    // Proposed($): clamp if over 2x total portfolio
     if (val > 2 * totalPortfolioValue) {
       val = 2 * totalPortfolioValue;
     }
@@ -944,7 +960,7 @@ function updateCharts() {
 }
 
 /***************************************************************
- * Utility
+ * Utility Functions
  ***************************************************************/
 function formatMoney(x) {
   return new Intl.NumberFormat('en-US', {
@@ -1025,7 +1041,6 @@ window.addEventListener('DOMContentLoaded', () => {
   initCharts();
   enablePortfolioValueEdit();
 
-  // Hook up the risk dropdown, new client, and reset trades
   document.getElementById('riskSelect').addEventListener('change', onRiskChange);
   document.getElementById('newClientBtn').addEventListener('click', doGenerateNewClient);
   document.getElementById('resetTradesBtn').addEventListener('click', doResetTrades);
