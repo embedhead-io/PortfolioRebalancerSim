@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
-  <title>Portfolio Manager Simulator – Phase 1 Stabilization</title>
+  <title>Portfolio Manager Simulator – Phase 1 Stabilization (Reordered Columns)</title>
   <style>
     :root {
       --bg-body: #f8f9fa;
@@ -151,6 +151,19 @@
       white-space: nowrap;
     }
     /* Force consistent column widths */
+    /* 11 columns total:
+       1: Name
+       2: Current($)
+       3: Target($)
+       4: Delta($)
+       5: Proposed($)
+       6: Total($)
+       7: Current(%)
+       8: Target(%)
+       9: Delta(%)
+       10: Proposed(%)
+       11: Total(%)
+    */
     thead th:nth-child(1)  { width: 14%; text-align: left; }
     thead th:nth-child(2)  { width: 8%; }
     thead th:nth-child(3)  { width: 8%; }
@@ -283,7 +296,7 @@
 <div class="dark-mode-toggle" id="darkModeToggle"></div>
 
 <div class="container">
-  <h1>Portfolio Manager Simulator – Phase 1 Stabilization</h1>
+  <h1>Portfolio Manager Simulator – Phase 1 (Reordered Columns)</h1>
 
   <!-- Client Profile -->
   <div class="section" id="client-profile">
@@ -345,16 +358,18 @@
       <thead>
         <tr>
           <th>Asset/Class/Position</th>
+          <!-- New order for Dollars: Current, Target, Delta, Proposed, Total -->
           <th>Current ($)</th>
           <th>Target ($)</th>
-          <th>Proposed ($)</th>
-          <th>Total ($)</th> 
           <th>Delta ($)</th>
+          <th>Proposed ($)</th>
+          <th>Total ($)</th>
+          <!-- New order for Percent: Current, Target, Delta, Proposed, Total -->
           <th>Current (%)</th>
           <th>Target (%)</th>
+          <th>Delta (%)</th>
           <th>Proposed (%)</th>
           <th>Total (%)</th>
-          <th>Delta (%)</th>
         </tr>
       </thead>
       <tbody id="portfolioRows"></tbody>
@@ -380,7 +395,7 @@
 </div>
 
 <div class="footer">
-  &copy; Example – Phase 1 Stabilization
+  &copy; Example – Reordered Columns
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -496,7 +511,6 @@ function aggregateNode(node) {
  * Compute Percentages
  ***************************************************************/
 function computePercentages(node, rootRef) {
-  // Single universal denominator => rootRef.targetDollar
   let denom = (rootRef.targetDollar > 0 ? rootRef.targetDollar : 1);
 
   node.currentPct   = (node.currentDollar   / denom) * 100;
@@ -511,6 +525,9 @@ function computePercentages(node, rootRef) {
 
 /***************************************************************
  * Table Rendering
+ * Reordered columns: 
+ * - For $: Current, Target, Delta, Proposed, Total
+ * - For %: Current, Target, Delta, Proposed, Total
  ***************************************************************/
 function renderTable() {
   const tb = document.getElementById('portfolioRows');
@@ -531,6 +548,7 @@ function renderNode(node, level) {
     tdName.className = 'asset-col';
   }
 
+  // Expand toggler if children
   if (node.children && node.children.length > 0) {
     let toggler = document.createElement('span');
     toggler.className = 'expand-toggle';
@@ -544,17 +562,24 @@ function renderNode(node, level) {
   tdName.appendChild(document.createTextNode(node.name));
   tr.appendChild(tdName);
 
-  // Current($)
+  // 1) Current($)
   let tdCur = document.createElement('td');
   tdCur.textContent = formatMoney(node.currentDollar || 0);
   tr.appendChild(tdCur);
 
-  // Target($)
+  // 2) Target($)
   let tdTar = document.createElement('td');
   tdTar.textContent = formatMoney(node.targetDollar || 0);
   tr.appendChild(tdTar);
 
-  // Proposed($)
+  // 3) Delta($) => (target - total)
+  let dval = (node.targetDollar || 0) - (node.totalDollar || 0);
+  let tdDelta = document.createElement('td');
+  tdDelta.textContent = withSignMoney(dval);
+  colorDeltaCell(tdDelta, dval);
+  tr.appendChild(tdDelta);
+
+  // 4) Proposed($)
   let tdProp = document.createElement('td');
   tdProp.className = 'proposed-col';
   let pd = node.proposedDollar || 0;
@@ -566,29 +591,29 @@ function renderNode(node, level) {
   tdProp.onclick = () => editProposedCell(tdProp, node, 'dollar');
   tr.appendChild(tdProp);
 
-  // Total($)
+  // 5) Total($)
   let tdTot = document.createElement('td');
   tdTot.textContent = formatMoney(node.totalDollar || 0);
   tr.appendChild(tdTot);
 
-  // Delta($)
-  let dval = (node.targetDollar || 0) - (node.totalDollar || 0);
-  let tdDelta = document.createElement('td');
-  tdDelta.textContent = withSignMoney(dval);
-  colorDeltaCell(tdDelta, dval);
-  tr.appendChild(tdDelta);
-
-  // Current(%)
+  // 6) Current(%)
   let tdCurPct = document.createElement('td');
   tdCurPct.textContent = (node.currentPct || 0).toFixed(2) + "%";
   tr.appendChild(tdCurPct);
 
-  // Target(%)
+  // 7) Target(%)
   let tdTarPct = document.createElement('td');
   tdTarPct.textContent = (node.targetPct || 0).toFixed(2) + "%";
   tr.appendChild(tdTarPct);
 
-  // Proposed(%)
+  // 8) Delta(%)
+  let dp = (node.targetPct || 0) - (node.totalPct || 0);
+  let tdDeltaPct = document.createElement('td');
+  tdDeltaPct.textContent = withSignPct(dp);
+  colorDeltaCell(tdDeltaPct, dp);
+  tr.appendChild(tdDeltaPct);
+
+  // 9) Proposed(%)
   let tdPropPct = document.createElement('td');
   tdPropPct.className = 'proposed-col';
   let pp = node.proposedPct || 0;
@@ -600,26 +625,24 @@ function renderNode(node, level) {
   tdPropPct.onclick = () => editProposedCell(tdPropPct, node, 'percent');
   tr.appendChild(tdPropPct);
 
-  // Total(%)
+  // 10) Total(%)
   let tdTotPct = document.createElement('td');
   let tp = node.totalPct || 0;
   tdTotPct.textContent = tp.toFixed(2) + "%";
   tr.appendChild(tdTotPct);
 
-  // Delta(%)
-  let dp = (node.targetPct || 0) - (node.totalPct || 0);
-  let tdDeltaPct = document.createElement('td');
-  tdDeltaPct.textContent = withSignPct(dp);
-  colorDeltaCell(tdDeltaPct, dp);
-  tr.appendChild(tdDeltaPct);
-
   document.getElementById('portfolioRows').appendChild(tr);
 
+  // If expanded, render children
   if (node.expanded && node.children && node.children.length > 0) {
     node.children.forEach(ch => renderNode(ch, level + 1));
   }
 }
 
+/***************************************************************
+ * The "TOTAL PORTFOLIO" row => appended last
+ * Following the same new column order
+ ***************************************************************/
 function buildTotalRow() {
   const tb = document.getElementById('portfolioRows');
 
@@ -628,57 +651,76 @@ function buildTotalRow() {
   let pDollar   = root.proposedDollar  || 0;
   let totDollar = root.totalDollar     || 0;
 
+  // Delta($)
   let dval = tDollar - totDollar; 
+  // Delta(%)
   let dpct = (root.targetPct || 0) - (root.totalPct || 0);
 
   let tr = document.createElement('tr');
   tr.classList.add('total-row');
 
+  // 1) Label
   let tdLabel = document.createElement('td');
   tdLabel.textContent = "Total Portfolio";
   tr.appendChild(tdLabel);
 
+  // 2) Current($)
   let tdCurr = document.createElement('td');
   tdCurr.textContent = formatMoney(cDollar);
   tr.appendChild(tdCurr);
 
+  // 3) Target($)
   let tdTarg = document.createElement('td');
   tdTarg.textContent = formatMoney(tDollar);
   tr.appendChild(tdTarg);
 
-  let tdProp = document.createElement('td');
-  tdProp.textContent = formatMoney(pDollar);
-  tr.appendChild(tdProp);
-
-  let tdTot = document.createElement('td');
-  tdTot.textContent = formatMoney(totDollar);
-  tr.appendChild(tdTot);
-
+  // 4) Delta($)
   let tdDelta = document.createElement('td');
   tdDelta.textContent = withSignMoney(dval);
   colorDeltaCell(tdDelta, dval);
   tr.appendChild(tdDelta);
 
+  // 5) Proposed($)
+  let tdProp = document.createElement('td');
+  tdProp.textContent = formatMoney(pDollar);
+  tr.appendChild(tdProp);
+
+  // 6) Total($)
+  let tdTot = document.createElement('td');
+  tdTot.textContent = formatMoney(totDollar);
+  tr.appendChild(tdTot);
+
+  // 7) Current(%)
   let tdCurrPct = document.createElement('td');
   tdCurrPct.textContent = (root.currentPct || 0).toFixed(2) + "%";
   tr.appendChild(tdCurrPct);
 
+  // 8) Target(%)
   let tdTargPct = document.createElement('td');
   tdTargPct.textContent = (root.targetPct || 0).toFixed(2) + "%";
   tr.appendChild(tdTargPct);
 
-  let tdPropPct = document.createElement('td');
-  tdPropPct.textContent = (root.proposedPct || 0).toFixed(2) + "%";
-  tr.appendChild(tdPropPct);
-
-  let tdTotPct = document.createElement('td');
-  tdTotPct.textContent = (root.totalPct || 0).toFixed(2) + "%";
-  tr.appendChild(tdTotPct);
-
+  // 9) Delta(%)
   let tdDeltaPct = document.createElement('td');
   tdDeltaPct.textContent = withSignPct(dpct);
   colorDeltaCell(tdDeltaPct, dpct);
   tr.appendChild(tdDeltaPct);
+
+  // 10) Proposed(%)
+  let tdPropPct = document.createElement('td');
+  tdPropPct.textContent = (root.proposedPct || 0).toFixed(2) + "%";
+  tr.appendChild(tdPropPct);
+
+  // 11) Total(%)
+  // We only have 10 columns in the new order? Actually, we have 11 columns:
+  // 1 for name, 5 for dollar columns, 5 for percent columns = 11 total.
+  // So we do need an 11th column for "Total(%)".
+  // But the instructions said: "Current, Target, Delta, Proposed, Total" for both $ and % => that is 5 columns each, plus the first column (name).
+  // => 1 + 5 + 5 = 11 columns.
+
+  let tdTotPct = document.createElement('td');
+  tdTotPct.textContent = (root.totalPct || 0).toFixed(2) + "%";
+  tr.appendChild(tdTotPct);
 
   tb.appendChild(tr);
 }
@@ -815,7 +857,6 @@ document.getElementById('cashTargetInput').addEventListener('change', () => {
   let oldBond  = userBondPct;
   let oldSum   = oldStock + oldBond;
   if (oldSum < 0.0001) {
-    // fallback: all stocks if oldSum was near 0
     userStockPct = 1 - userCashPct;
     userBondPct  = 0;
   } else {
