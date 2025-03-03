@@ -210,6 +210,17 @@
       background: #f0f0f0;
     }
 
+    /* Match header row */
+    .total-row {
+      background: var(--header-footer-bg);  /* Same as header */
+      font-weight: bold; 
+      text-align: right;
+    }
+    .total-row td {
+      border-top: 2px solid #ccc; /* Adds a clear top border to separate it */
+      padding: 8px; /* Slightly more padding for a balanced look */
+    }
+
     /* 3 smaller charts side by side */
     .charts-container {
       display: flex; 
@@ -590,9 +601,9 @@ function renderNode(node, level) {
 /***************************************************************
  * The "TOTAL PORTFOLIO" row => appended last in same <tbody>
  ***************************************************************/
-function buildTotalRow() {
+ function buildTotalRow() {
   const tb = document.getElementById('portfolioRows');
-  
+
   let cDollar = root.currentDollar   || 0;
   let tDollar = root.targetDollar    || 0;
   let pDollar = root.proposedDollar  || 0;
@@ -602,6 +613,7 @@ function buildTotalRow() {
   let dpct = (root.targetPct || 0) - (root.totalPct || 0);
 
   let tr = document.createElement('tr');
+  tr.classList.add('total-row');  // Apply special styling
 
   // 1) Label
   let tdLabel = document.createElement('td');
@@ -660,7 +672,6 @@ function buildTotalRow() {
   colorDeltaCell(tdDeltaPct, dpct);
   tr.appendChild(tdDeltaPct);
 
-  // Append to the same <tbody>
   tb.appendChild(tr);
 }
 
