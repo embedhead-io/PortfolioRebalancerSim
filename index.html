@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
-  <title>Portfolio Manager Simulator – Phase 2 (CSV Import)</title>
+  <title>Portfolio Manager Simulator – Phase 1 (Reordered Columns, Auto-Expanded, Negative Allowed)</title>
   <style>
     :root {
       --bg-body: #f8f9fa;
@@ -12,7 +12,6 @@
       --asset-col-bg: #f7f7f7;
       --proposed-col-border: #007bff;
       --editable-field-border: #ccc;
-      --section-bg: #fafafa; 
     }
     body.dark-mode {
       --bg-body: #202020;
@@ -22,7 +21,6 @@
       --asset-col-bg: #333;
       --proposed-col-border: #66afff;
       --editable-field-border: #888;
-      --section-bg: #3a3a3a;
     }
     body {
       margin: 0;
@@ -41,7 +39,7 @@
       box-shadow: 0 0 10px rgba(0,0,0,0.05);
       transition: background 0.3s, color 0.3s;
     }
-    h1, h2, h3 {
+    h1, h2 {
       margin-top: 0;
       margin-bottom: 0.75rem;
     }
@@ -57,7 +55,9 @@
       border: 2px solid #999;
       transition: background 0.3s;
     }
-    .dark-mode-toggle:hover { background: #444; }
+    .dark-mode-toggle:hover { 
+      background: #444; 
+    }
     body.dark-mode .dark-mode-toggle {
       background: #aaa; 
       border-color: #ccc;
@@ -66,53 +66,47 @@
       background: #ccc;
     }
     .btn {
-      padding: 0.5rem 1rem;
+      padding: 0.4rem 0.8rem;
       border: none;
       background: #007bff;
       color: #fff;
       cursor: pointer;
       border-radius: 3px;
+      margin-left: 0.5rem;
       font-size: 0.9rem;
-      margin: 0.2rem;
     }
     .btn:hover {
       background: #0069d9;
     }
     .section {
       margin-bottom: 1.5rem;
-      padding-bottom: 1rem;
       border-bottom: 1px solid #ddd;
+      padding-bottom: 1rem;
     }
-    .top-row {
-      display: flex;
-      gap: 2rem;
-      margin-bottom: 1.5rem;
-      align-items: flex-start;
+    /* Profile layout */
+    #client-profile {
+      display: flex; 
+      justify-content: space-between; 
+      flex-wrap: wrap;
     }
-    .profile-col, .enhancements-col {
-      flex: 1;
-      min-width: 300px;
-      background: var(--section-bg);
-      border-radius: 4px;
-      padding: 1rem;
+    .profile-info {
+      flex: 1; 
+      min-width: 320px; 
+      margin-right: 1rem;
     }
-    .profile-col > h2, .enhancements-col > h2 {
-      margin-top: 0;
-      margin-bottom: 1rem;
-      font-size: 1.25rem;
-      border-bottom: 1px solid #ccc;
-      padding-bottom: 0.5rem;
+    .profile-actions { 
+      margin-top: 1rem; 
     }
-    .profile-info p {
-      margin: 0.5rem 0;
+    #riskSelect { 
+      margin-left: 0.5rem; 
     }
-    .profile-actions {
-      margin-top: 1rem;
-    }
-    #riskSelect { margin-left: 0.5rem; }
+    /* Numeric input for Cash Target (%) */
     #cashTargetInput {
-      width: 50px; text-align: right; margin-left: 0.5rem;
+      width: 50px;
+      text-align: right;
+      margin-left: 0.5rem;
     }
+    /* Editable Portfolio Value */
     .editable-field {
       cursor: pointer;
       border: 1px dotted var(--editable-field-border);
@@ -120,44 +114,23 @@
       background: #fafafa;
       transition: border-color 0.3s;
     }
-    body.dark-mode .editable-field { background: #333; }
+    body.dark-mode .editable-field { 
+      background: #333; 
+    }
     .editable-field input {
-      width: 80px;
-      border: 1px solid #007bff;
-      outline: none;
-      font: inherit;
+      width: 80px; 
+      border: 1px solid #007bff; 
+      outline: none; 
+      font: inherit; 
       box-sizing: border-box;
       text-align: right;
     }
-    #custom-profile-section h3 {
-      margin-top: 0;
-      margin-bottom: 0.75rem;
-      font-size: 1rem;
-      border-bottom: 1px solid #ccc;
-      padding-bottom: 0.5rem;
-    }
-    #custom-profile-section label {
-      display: inline-block; 
-      width: 80px;
-    }
-    #custom-profile-section input[type="number"] {
-      width: 50px;
-      margin-right: 1rem;
-    }
-    .portfolio-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin: 1rem 0;
-    }
-    .portfolio-buttons button {
-      margin-left: 0.5rem;
-    }
+    /* Table & expansions */
     table {
       width: 100%;
       table-layout: fixed;
       border-collapse: collapse;
-      margin: 1rem 0;
+      margin: 0.5rem 0;
       transition: background 0.3s, color 0.3s;
     }
     thead th {
@@ -170,8 +143,8 @@
       text-align: right;
       overflow: hidden;
       white-space: nowrap;
-      font-size: 0.88rem;
     }
+    /* 11 columns: Name + 5 for dollars + 5 for percents */
     thead th:nth-child(1)  { width: 14%; text-align: left; }
     thead th:nth-child(2)  { width: 8%; }
     thead th:nth-child(3)  { width: 8%; }
@@ -197,18 +170,39 @@
       cursor: pointer;
       transition: border-color 0.3s;
     }
-    body.dark-mode .proposed-col { background: #333; }
-    .proposed-positive { color: green; font-weight: bold; }
-    .proposed-negative { color: red;   font-weight: bold; }
-    .delta-positive { color: green; font-weight: bold; }
-    .delta-negative { color: red;   font-weight: bold; }
-    .expand-toggle {
-      cursor: pointer; color: #007bff; margin-right: 0.5rem;
+    body.dark-mode .proposed-col { 
+      background: #333; 
     }
-    .class-row td { padding-left: 2em; }
-    .position-row td { padding-left: 4em; }
+    .proposed-positive { 
+      color: green; 
+      font-weight: bold; 
+    }
+    .proposed-negative { 
+      color: red; 
+      font-weight: bold; 
+    }
+    .delta-positive { 
+      color: green; 
+      font-weight: bold; 
+    }
+    .delta-negative { 
+      color: red; 
+      font-weight: bold; 
+    }
+    .expand-toggle {
+      cursor: pointer; 
+      color: #007bff; 
+      margin-right: 0.5rem;
+    }
+    .class-row td { 
+      padding-left: 2em; 
+    }
+    .position-row td { 
+      padding-left: 4em; 
+    }
     .subtotal-row td {
-      font-weight: bold; background: #f0f0f0;
+      font-weight: bold; 
+      background: #f0f0f0;
     }
     .total-row {
       background: var(--header-footer-bg);
@@ -220,914 +214,718 @@
       padding: 8px;
     }
     .charts-container {
-      display: flex;
-      gap: 1rem;
-      margin-top: 1rem;
-      flex-wrap: wrap;
+      display: flex; 
+      gap: 1rem; 
+      margin-top: 1rem; 
+      flex-wrap: wrap; 
       justify-content: space-evenly;
     }
     .chart-box {
-      flex: 1; min-width: 250px; max-width: 300px; max-height: 300px;
-      position: relative; margin: auto; background: #f9f9f9;
-      border-radius: 4px; padding: 1rem; text-align: center;
+      flex: 1; 
+      min-width: 250px; 
+      max-width: 300px; 
+      max-height: 300px; 
+      position: relative; 
+      margin: auto; 
+      background: #f9f9f9; 
+      border-radius: 4px; 
+      padding: 1rem; 
+      text-align: center;
       transition: background 0.3s;
     }
-    body.dark-mode .chart-box { background: #333; }
+    body.dark-mode .chart-box { 
+      background: #333; 
+    }
     .chart-title {
-      margin-bottom: 0.5rem; font-weight: bold; font-size: 0.95rem;
+      margin-bottom: 0.5rem; 
+      font-weight: bold;
     }
     .chart-box canvas {
-      width: 100% !important; height: 100% !important;
+      width: 100% !important; 
+      height: 100% !important;
     }
     .footer {
-      text-align: center; margin-top: 2rem; font-size: 0.85rem;
+      text-align: center; 
+      margin-top: 2rem; 
+      font-size: 0.85rem; 
       transition: color 0.3s;
       color: var(--text-color);
     }
-    .success { color: green; font-weight: bold; }
-    .error   { color: red;   font-weight: bold; }
+    .success { 
+      color: green; 
+      font-weight: bold; 
+    }
+    .error { 
+      color: red;   
+      font-weight: bold; 
+    }
   </style>
 </head>
 <body>
-  
-  <div class="dark-mode-toggle" id="darkModeToggle"></div>
 
-  <div class="container">
-    <h1>Portfolio Manager Simulator – Phase 2 (CSV Import)</h1>
-    <div class="top-row">
-      
-      <!-- Left: Client Profile -->
-      <div class="profile-col">
-        <h2>Client Profile</h2>
-        <div class="profile-info">
-          <p><strong>Name:</strong> <span id="clientName">--</span></p>
-          <p>
-            <strong>Risk Tolerance:</strong>
-            <select id="riskSelect">
-              <option value="conservative">Conservative</option>
-              <option value="moderate" selected>Moderate</option>
-              <option value="aggressive">Aggressive</option>
-            </select>
-          </p>
-          <p>
-            <strong>Portfolio Value:</strong>
-            $<span id="clientValue" class="editable-field">0</span>
-          </p>
-          <p>
-            <strong>Target Allocation:</strong>
-            <span id="targetStocks">--</span>% Stocks, 
-            <span id="targetBonds">--</span>% Bonds, 
-            <span id="targetCash">--</span>% Cash
-          </p>
-          <p>
-            <strong>Cash Target (%):</strong>
-            <input type="number" id="cashTargetInput" value="10" min="0" max="100" step="1"/>
-          </p>
-          <div class="profile-actions">
-            <button class="btn" id="newClientBtn">Generate New Client</button>
-          </div>
-        </div>
-      </div>
-      
-      <!-- Right: CSV Import + Custom Profile -->
-      <div class="enhancements-col">
-        <h2>Phase 2 Enhancements</h2>
-        <!-- CSV Import -->
-        <div style="margin-bottom:1rem;">
-          <button class="btn" id="importCSVBtn">Import CSV</button>
-          <input type="file" id="csvFileInput" accept=".csv" style="display:none"/>
-        </div>
-        
-        <!-- Custom Profiles -->
-        <div id="custom-profile-section">
-          <h3>Custom Profile</h3>
-          <div>
-            <label>Stocks (%):</label>
-            <input type="number" id="customStockPct" value="40"/>
-            <label>Bonds (%):</label>
-            <input type="number" id="customBondPct" value="30"/>
-          </div>
-          <div style="margin-top:0.5rem;">
-            <label>Cash (%):</label>
-            <input type="number" id="customCashPct" value="20"/>
-            <label>Real Est. (%):</label>
-            <input type="number" id="customRePct" value="10"/>
-          </div>
-          <div style="margin-top:0.5rem;">
-            <button class="btn" id="saveProfileBtn">Save as New Profile</button>
-          </div>
-          <div style="margin-top:0.5rem;">
-            <label>Apply Profile:</label>
-            <select id="customProfilesSelect">
-              <option value="">--No custom profile--</option>
-            </select>
-            <button class="btn" id="applyProfileBtn">Apply</button>
-          </div>
-        </div>
-      </div>
-    </div>
+<div class="dark-mode-toggle" id="darkModeToggle"></div>
 
-    <div class="section">
-      <div class="portfolio-header">
-        <h2>Current (or Projected) Portfolio</h2>
-        <div class="portfolio-buttons">
-          <button class="btn" id="rebalanceBtn">Rebalance</button>
-          <button class="btn" id="resetTradesBtn">Reset Trades</button>
-        </div>
-      </div>
+<div class="container">
+  <h1>Portfolio Manager Simulator – Phase 1 (Auto-Expanded, Reordered Columns)</h1>
 
-      <table id="portfolioTable">
-        <thead>
-          <tr>
-            <th>Asset/Class/Position</th>
-            <th>Current ($)</th>
-            <th>Target ($)</th>
-            <th>Delta ($)</th>
-            <th>Proposed ($)</th>
-            <th>Total ($)</th>
-            <th>Current (%)</th>
-            <th>Target (%)</th>
-            <th>Delta (%)</th>
-            <th>Proposed (%)</th>
-            <th>Total (%)</th>
-          </tr>
-        </thead>
-        <tbody id="portfolioRows"></tbody>
-      </table>
-
-      <div class="charts-container">
-        <div class="chart-box">
-          <div class="chart-title">Current Allocation</div>
-          <canvas id="currentChart"></canvas>
-        </div>
-        <div class="chart-box">
-          <div class="chart-title">Target Allocation</div>
-          <canvas id="targetChart"></canvas>
-        </div>
-        <div class="chart-box">
-          <div class="chart-title">Total Allocation</div>
-          <canvas id="finalChart"></canvas>
-        </div>
+  <!-- Client Profile -->
+  <div class="section" id="client-profile">
+    <div class="profile-info">
+      <p><strong>Name:</strong> <span id="clientName">--</span></p>
+      <p>
+        <strong>Risk Tolerance:</strong>
+        <select id="riskSelect">
+          <option value="conservative">Conservative</option>
+          <option value="moderate" selected>Moderate</option>
+          <option value="aggressive">Aggressive</option>
+        </select>
+      </p>
+      <p>
+        <strong>Portfolio Value:</strong>
+        $<span id="clientValue" class="editable-field">0</span>
+      </p>
+      <p>
+        <strong>Target Allocation:</strong>
+        <span id="targetStocks">--</span>% Stocks, 
+        <span id="targetBonds">--</span>% Bonds, 
+        <span id="targetCash">--</span>% Cash
+      </p>
+      <p>
+        <strong>Cash Target (%):</strong>
+        <input type="number" id="cashTargetInput" value="10" min="0" max="100" step="1"/>
+      </p>
+      <div class="profile-actions">
+        <button class="btn" id="newClientBtn">Generate New Client</button>
       </div>
-      <p id="tradeMessage"></p>
     </div>
   </div>
 
-  <div class="footer">
-    &copy; Phase 2 – CSV Import, Negative Proposed, Rebalance
+  <!-- Table & Charts -->
+  <div class="section">
+    <div class="portfolio-header">
+      <h2>Current (or Projected) Portfolio</h2>
+      <div class="portfolio-buttons">
+        <button class="btn" id="resetTradesBtn">Reset Trades</button>
+      </div>
+    </div>
+    <table id="portfolioTable">
+      <thead>
+        <tr>
+          <th>Asset/Class/Position</th>
+          <th>Current ($)</th>
+          <th>Target ($)</th>
+          <th>Delta ($)</th>
+          <th>Proposed ($)</th>
+          <th>Total ($)</th>
+          <th>Current (%)</th>
+          <th>Target (%)</th>
+          <th>Delta (%)</th>
+          <th>Proposed (%)</th>
+          <th>Total (%)</th>
+        </tr>
+      </thead>
+      <tbody id="portfolioRows"></tbody>
+    </table>
+    <div class="charts-container">
+      <div class="chart-box">
+        <div class="chart-title">Current Allocation</div>
+        <canvas id="currentChart"></canvas>
+      </div>
+      <div class="chart-box">
+        <div class="chart-title">Target Allocation</div>
+        <canvas id="targetChart"></canvas>
+      </div>
+      <div class="chart-box">
+        <div class="chart-title">Total Allocation</div>
+        <canvas id="finalChart"></canvas>
+      </div>
+    </div>
+    <p id="tradeMessage"></p>
   </div>
+</div>
 
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script>
-    /***************************************************************
-     * Data Model & Globals
-     ***************************************************************/
-    let root = { name: "ROOT", expanded: true, children: [] };
-    let originalData  = null;
-    let clientName    = "";
-    let totalPortfolioValue = 0;
-    let originalPortfolioValue = 0;
+<div class="footer">
+  &copy; Example – Auto-Expanded, Reordered Columns
+</div>
 
-    // For simplicity, the same structure. We keep quantity as placeholder for future.
-    // But we won't display or use it yet.
-    // let quantity = 0;
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+/***************************************************************
+ * Data Model
+ ***************************************************************/
+let root = {
+  name: "ROOT",
+  expanded: true,
+  children: []
+};
+let originalData = null;
 
-    let userStockPct=0.5, userBondPct=0.4, userCashPct=0.1, userRePct=0;
+let clientName = "";
+let totalPortfolioValue = 0;
+let originalPortfolioValue = 0;
+let userStockPct = 0.5, userBondPct = 0.4, userCashPct = 0.1;
+let currentChart, targetChart, finalChart;
 
-    let currentChart, targetChart, finalChart;
-    let customProfiles = {};
+/***************************************************************
+ * Dark Mode Toggle
+ ***************************************************************/
+const darkToggle = document.getElementById('darkModeToggle');
+darkToggle.addEventListener('click', () => {
+  document.body.classList.toggle('dark-mode');
+});
 
-    /***************************************************************
-     * Dark Mode Toggle
-     ***************************************************************/
-    const darkToggle = document.getElementById('darkModeToggle');
-    darkToggle.addEventListener('click', () => {
-      document.body.classList.toggle('dark-mode');
-    });
+/***************************************************************
+ * Generate Random Data (All nodes expanded by default)
+ ***************************************************************/
+function generateRandomNestedData() {
+  root.children = [];
+  let stocks = { name: "Stocks", isAsset: true, expanded: true, children: [] };
+  let bonds  = { name: "Bonds",  isAsset: true, expanded: true, children: [] };
+  let cash   = { name: "Cash",   isAsset: true, expanded: true, children: [] };
 
-    /***************************************************************
-     * CSV Import
-     ***************************************************************/
-    document.getElementById('importCSVBtn').addEventListener('click', () => {
-      document.getElementById('csvFileInput').click();
-    });
-    document.getElementById('csvFileInput').addEventListener('change', (evt) => {
-      let file = evt.target.files[0];
-      if (!file) return;
-      let reader = new FileReader();
-      reader.onload = (e) => {
-        try {
-          parseCSV(e.target.result);
-          renderAll();
-          document.getElementById('tradeMessage').textContent = "Imported from CSV.";
-        } catch(err) {
-          alert("Error parsing CSV file: " + err);
-        }
-      };
-      reader.readAsText(file);
-    });
+  stocks.children.push({
+    name: "Large Cap", 
+    isClass: true, 
+    expanded: true, 
+    children: [
+      makePosition("AAPL"), 
+      makePosition("MSFT")
+    ]
+  });
+  stocks.children.push({
+    name: "Small Cap", 
+    isClass: true, 
+    expanded: true, 
+    children: [
+      makePosition("RGEN"), 
+      makePosition("FIZZ")
+    ]
+  });
+  bonds.children.push(makePosition("Corp Bond A"));
+  bonds.children.push(makePosition("Gov Bond B"));
+  cash.currentDollar = roundTo100(3000 + Math.random() * 2000);
+  cash.targetDollar  = 0;
+  root.children.push(stocks, bonds, cash);
+}
 
-    /**
-     * Parse CSV lines. Minimum fields: Ticker. Optional fields:
-     * Current($), Current(%), Target($), Target(%), Proposed($), Proposed(%)
-     */
-    function parseCSV(csvText) {
-      root = { name: "ROOT", expanded: true, children: [] }; 
-      let lines = csvText.split(/\r?\n/).map(line => line.trim()).filter(l => l.length>0);
-      if (lines.length < 2) throw new Error("Not enough CSV lines.");
+function makePosition(ticker) {
+  let cur = 3000 + Math.random() * 9000;
+  let tar = cur + (Math.random() - 0.5) * 2000;
+  return {
+    name: ticker,
+    isPosition: true,
+    expanded: true,
+    currentDollar: roundTo100(cur),
+    targetDollar:  roundTo100(tar),
+    proposedDollar: 0,
+    totalDollar: 0
+  };
+}
 
-      // parse header
-      let header = lines[0].split(",").map(h => h.trim().toLowerCase());
-      let idxTicker      = header.indexOf("ticker");
-      let idxCurDollar   = header.indexOf("current($)");
-      let idxCurPct      = header.indexOf("current(%)");
-      let idxTarDollar   = header.indexOf("target($)");
-      let idxTarPct      = header.indexOf("target(%)");
-      let idxPropDollar  = header.indexOf("proposed($)");
-      let idxPropPct     = header.indexOf("proposed(%)");
-      
-      if (idxTicker < 0) throw new Error("CSV must have a 'Ticker' column.");
+function roundTo100(x) {
+  return Math.round(x / 100) * 100;
+}
 
-      // We'll store all positions in a single "CSV Imports" asset node:
-      let csvAsset = { 
-        name: "CSV Imports", isAsset:true, expanded:true, 
-        children: []
-      };
-      
-      for (let i=1; i<lines.length; i++) {
-        let row = lines[i].split(",").map(x => x.trim());
-        if (row.length < 1) continue;
-        let ticker = (row[idxTicker] || "");
-        if (!ticker) continue; // skip empty Ticker rows
+/***************************************************************
+ * Aggregation (bottom-up)
+ ***************************************************************/
+function aggregateNode(node) {
+  if (!node.children || node.children.length === 0) {
+    node.totalDollar = (node.currentDollar || 0) + (node.proposedDollar || 0);
+    return;
+  }
+  let c = 0, t = 0, p = 0, tot = 0;
+  node.children.forEach(ch => {
+    aggregateNode(ch);
+    c   += ch.currentDollar   || 0;
+    t   += ch.targetDollar    || 0;
+    p   += ch.proposedDollar  || 0;
+    tot += ch.totalDollar     || 0;
+  });
+  node.currentDollar   = c;
+  node.targetDollar    = t;
+  node.proposedDollar  = p;
+  node.totalDollar     = tot;
+}
 
-        // parse optional fields
-        let currentDollar = 0, targetDollar=0, proposedDollar=0;
+/***************************************************************
+ * Compute Percentages
+ ***************************************************************/
+function computePercentages(node, rootRef) {
+  let denom = (rootRef.targetDollar > 0 ? rootRef.targetDollar : 1);
+  node.currentPct   = (node.currentDollar   / denom) * 100;
+  node.targetPct    = (node.targetDollar    / denom) * 100;
+  node.totalPct     = (node.totalDollar     / denom) * 100;
+  node.proposedPct  = (node.proposedDollar / denom) * 100;
+  if (node.children && node.children.length > 0) {
+    node.children.forEach(ch => computePercentages(ch, rootRef));
+  }
+}
 
-        // 1) Current
-        if (idxCurDollar>=0 && row[idxCurDollar]) {
-          currentDollar = parseFloat(row[idxCurDollar].replace(/[$]/g,"")) || 0;
-        } else if (idxCurPct>=0 && row[idxCurPct]) {
-          let curPct = parseFloat(row[idxCurPct].replace(/[%]/g,"")) || 0;
-          currentDollar = (curPct/100)* totalPortfolioValue; 
-        }
+/***************************************************************
+ * Table Rendering (Reordered Columns)
+ ***************************************************************/
+function renderTable() {
+  const tb = document.getElementById('portfolioRows');
+  tb.innerHTML = "";
+  root.children.forEach(asset => renderNode(asset, 0));
+  buildTotalRow();  
+}
 
-        // 2) Target
-        if (idxTarDollar>=0 && row[idxTarDollar]) {
-          targetDollar = parseFloat(row[idxTarDollar].replace(/[$]/g,""))||0;
-        } else if (idxTarPct>=0 && row[idxTarPct]) {
-          let tarPct=parseFloat(row[idxTarPct].replace(/[%]/g,""))||0;
-          targetDollar=(tarPct/100)* totalPortfolioValue;
-        }
-
-        // 3) Proposed
-        if (idxPropDollar>=0 && row[idxPropDollar]) {
-          proposedDollar = parseFloat(row[idxPropDollar].replace(/[$]/g,""))||0;
-        } else if (idxPropPct>=0 && row[idxPropPct]) {
-          let propPct=parseFloat(row[idxPropPct].replace(/[%]/g,""))||0;
-          proposedDollar=(propPct/100)* totalPortfolioValue;
-        }
-
-        // Build node 
-        let node = {
-          name: ticker,
-          isPosition: true,
-          expanded: true,
-          currentDollar: currentDollar,
-          targetDollar:  targetDollar,
-          proposedDollar: proposedDollar,
-          totalDollar: 0,
-          // quantity: 0 // future
-        };
-        csvAsset.children.push(node);
-      }
-      // If no positions, throw
-      if (csvAsset.children.length < 1) {
-        throw new Error("No valid Ticker rows found in CSV.");
-      }
-      root.children.push(csvAsset);
-      // no hierarchy beyond that single asset node
-    }
-
-    /***************************************************************
-     * Custom Profiles
-     ***************************************************************/
-    function doSaveCustomProfile(){
-      let s  = parseFloat(document.getElementById('customStockPct').value)||0;
-      let b  = parseFloat(document.getElementById('customBondPct').value) ||0;
-      let c  = parseFloat(document.getElementById('customCashPct').value) ||0;
-      let re = parseFloat(document.getElementById('customRePct').value)   ||0;
-      let sum = s+b+c+re;
-      if (Math.abs(sum-100) > 0.001) {
-        alert("Your custom percentages must total 100%!");
-        return;
-      }
-      let name = prompt("Enter a name for this profile:", "MyCustomProfile");
-      if (!name) return;
-      customProfiles[name] = { stocks:s/100, bonds:b/100, cash:c/100, re:re/100 };
-      let sel = document.getElementById('customProfilesSelect');
-      let opt = document.createElement('option');
-      opt.value = name;
-      opt.textContent = name;
-      sel.appendChild(opt);
-      alert("Profile saved!");
-    }
-    document.getElementById('saveProfileBtn').addEventListener('click', doSaveCustomProfile);
-
-    function doApplyCustomProfile(){
-      let selVal = document.getElementById('customProfilesSelect').value;
-      if (!selVal || !customProfiles[selVal]) {
-        alert("No custom profile selected.");
-        return;
-      }
-      let p = customProfiles[selVal];
-      userStockPct = p.stocks;
-      userBondPct  = p.bonds;
-      userCashPct  = p.cash;
-      userRePct    = p.re;
-
-      document.getElementById('targetStocks').textContent = (userStockPct*100).toFixed(0);
-      document.getElementById('targetBonds').textContent  = (userBondPct*100).toFixed(0);
-      document.getElementById('targetCash').textContent   = (userCashPct*100).toFixed(0);
-
-      applyRiskAllocation();
+function renderNode(node, level) {
+  const tr = document.createElement('tr');
+  if (node.isClass)         tr.classList.add('class-row');
+  else if (node.isPosition) tr.classList.add('position-row');
+  else if (node.isAsset)    tr.classList.add('asset-row');
+  let tdName = document.createElement('td');
+  if (node.isAsset) {
+    tdName.className = 'asset-col';
+  }
+  if (node.children && node.children.length > 0) {
+    let toggler = document.createElement('span');
+    toggler.className = 'expand-toggle';
+    toggler.textContent = node.expanded ? "▼" : "▶";
+    toggler.onclick = () => {
+      node.expanded = !node.expanded;
       renderAll();
+    };
+    tdName.appendChild(toggler);
+  }
+  tdName.appendChild(document.createTextNode(node.name));
+  tr.appendChild(tdName);
+  // Dollars: Current, Target, Delta, Proposed, Total
+  let tdCur = document.createElement('td');
+  tdCur.textContent = formatMoney(node.currentDollar || 0);
+  tr.appendChild(tdCur);
+  let tdTar = document.createElement('td');
+  tdTar.textContent = formatMoney(node.targetDollar || 0);
+  tr.appendChild(tdTar);
+  let dval = (node.targetDollar || 0) - (node.totalDollar || 0);
+  let tdDelta = document.createElement('td');
+  tdDelta.textContent = withSignMoney(dval);
+  colorDeltaCell(tdDelta, dval);
+  tr.appendChild(tdDelta);
+  let tdProp = document.createElement('td');
+  tdProp.className = 'proposed-col';
+  let pd = node.proposedDollar || 0;
+  if (Math.abs(pd) > 0.01) {
+    if (pd > 0) tdProp.classList.add('proposed-positive');
+    else        tdProp.classList.add('proposed-negative');
+  }
+  tdProp.textContent = formatMoney(pd);
+  tdProp.onclick = () => editProposedCell(tdProp, node, 'dollar');
+  tr.appendChild(tdProp);
+  let tdTot = document.createElement('td');
+  tdTot.textContent = formatMoney(node.totalDollar || 0);
+  tr.appendChild(tdTot);
+  // Percents: Current, Target, Delta, Proposed, Total
+  let tdCurPct = document.createElement('td');
+  tdCurPct.textContent = (node.currentPct || 0).toFixed(2) + "%";
+  tr.appendChild(tdCurPct);
+  let tdTarPct = document.createElement('td');
+  tdTarPct.textContent = (node.targetPct || 0).toFixed(2) + "%";
+  tr.appendChild(tdTarPct);
+  let dp = (node.targetPct || 0) - (node.totalPct || 0);
+  let tdDeltaPct = document.createElement('td');
+  tdDeltaPct.textContent = withSignPct(dp);
+  colorDeltaCell(tdDeltaPct, dp);
+  tr.appendChild(tdDeltaPct);
+  let tdPropPct = document.createElement('td');
+  tdPropPct.className = 'proposed-col';
+  let pp = node.proposedPct || 0;
+  if (Math.abs(pp) > 0.01) {
+    if (pp > 0) tdPropPct.classList.add('proposed-positive');
+    else        tdPropPct.classList.add('proposed-negative');
+  }
+  tdPropPct.textContent = pp.toFixed(2) + "%";
+  tdPropPct.onclick = () => editProposedCell(tdPropPct, node, 'percent');
+  tr.appendChild(tdPropPct);
+  let tdTotPct = document.createElement('td');
+  let tp = node.totalPct || 0;
+  tdTotPct.textContent = tp.toFixed(2) + "%";
+  tr.appendChild(tdTotPct);
+  document.getElementById('portfolioRows').appendChild(tr);
+  if (node.expanded && node.children && node.children.length > 0) {
+    node.children.forEach(ch => renderNode(ch, level + 1));
+  }
+}
+
+function buildTotalRow() {
+  const tb = document.getElementById('portfolioRows');
+  let cDollar   = root.currentDollar   || 0;
+  let tDollar   = root.targetDollar    || 0;
+  let pDollar   = root.proposedDollar  || 0;
+  let totDollar = root.totalDollar     || 0;
+  let dval = tDollar - totDollar; 
+  let dpct = (root.targetPct || 0) - (root.totalPct || 0);
+  let tr = document.createElement('tr');
+  tr.classList.add('total-row');
+  let tdLabel = document.createElement('td');
+  tdLabel.textContent = "Total Portfolio";
+  tr.appendChild(tdLabel);
+  let tdCurr = document.createElement('td');
+  tdCurr.textContent = formatMoney(cDollar);
+  tr.appendChild(tdCurr);
+  let tdTarg = document.createElement('td');
+  tdTarg.textContent = formatMoney(tDollar);
+  tr.appendChild(tdTarg);
+  let tdDelta = document.createElement('td');
+  tdDelta.textContent = withSignMoney(dval);
+  colorDeltaCell(tdDelta, dval);
+  tr.appendChild(tdDelta);
+  let tdProp = document.createElement('td');
+  tdProp.textContent = formatMoney(pDollar);
+  tr.appendChild(tdProp);
+  let tdTot = document.createElement('td');
+  tdTot.textContent = formatMoney(totDollar);
+  tr.appendChild(tdTot);
+  let tdCurrPct = document.createElement('td');
+  tdCurrPct.textContent = (root.currentPct || 0).toFixed(2) + "%";
+  tr.appendChild(tdCurrPct);
+  let tdTargPct = document.createElement('td');
+  tdTargPct.textContent = (root.targetPct || 0).toFixed(2) + "%";
+  tr.appendChild(tdTargPct);
+  let tdDeltaPct = document.createElement('td');
+  tdDeltaPct.textContent = withSignPct(dpct);
+  colorDeltaCell(tdDeltaPct, dpct);
+  tr.appendChild(tdDeltaPct);
+  let tdPropPct = document.createElement('td');
+  tdPropPct.textContent = (root.proposedPct || 0).toFixed(2) + "%";
+  tr.appendChild(tdPropPct);
+  let tdTotPct = document.createElement('td');
+  tdTotPct.textContent = (root.totalPct || 0).toFixed(2) + "%";
+  tr.appendChild(tdTotPct);
+  tb.appendChild(tr);
+}
+
+/***************************************************************
+ * Proposed Cell Editing => Single-click
+ * Negative values are now allowed.
+ ***************************************************************/
+function editProposedCell(cell, node, mode) {
+  let oldVal = cell.textContent.replace(/,/g, '').replace(/[^\d.\-+]/g, '');
+  cell.onclick = null;
+  cell.innerHTML = '';
+  let input = document.createElement('input');
+  input.type = 'text';
+  input.value = oldVal || '0';
+  setTimeout(() => input.select(), 0);
+  input.onblur = () => finishProposedEdit(cell, node, input.value, mode);
+  input.onkeydown = (ev) => {
+    if (ev.key === 'Enter') {
+      ev.preventDefault();
+      input.blur();
     }
-    document.getElementById('applyProfileBtn').addEventListener('click', doApplyCustomProfile);
+  };
+  cell.appendChild(input);
+  input.focus();
+}
 
-    /***************************************************************
-     * Generate Data (Random) & Basic Logic
-     ***************************************************************/
-    function generateRandomNestedData(){
-      root.children = [];
-      let stocks = { name:"Stocks", isAsset:true, expanded:true, children:[] };
-      let bonds  = { name:"Bonds",  isAsset:true, expanded:true, children:[] };
-      let cash   = { name:"Cash",   isAsset:true, expanded:true, children:[] };
-      let realE  = { name:"Real Estate", isAsset:true, expanded:true, children:[] };
-
-      stocks.children.push({
-        name:"Large Cap",
-        isClass:true, expanded:true,
-        children:[ makePosition("AAPL"), makePosition("MSFT") ]
-      });
-      stocks.children.push({
-        name:"Small Cap",
-        isClass:true, expanded:true,
-        children:[ makePosition("RGEN"), makePosition("FIZZ") ]
-      });
-      bonds.children.push(makePosition("Corp Bond A"));
-      bonds.children.push(makePosition("Gov Bond B"));
-
-      cash.currentDollar = roundTo100(3000 + Math.random()*2000);
-      cash.targetDollar  = 0;
-
-      realE.children.push(makePosition("REIT Fund"));
-
-      root.children.push(stocks, bonds, cash, realE);
+function finishProposedEdit(cell, node, rawVal, mode) {
+  rawVal = rawVal.replace(/,/g, '');
+  let val = parseFloat(rawVal);
+  if (isNaN(val)) val = 0;
+  if (mode === 'percent') {
+    if (val > 200) val = 200;
+    let rt = (root.targetDollar > 0 ? root.targetDollar : 1);
+    node.proposedDollar = (val / 100) * rt;
+  } else {
+    if (val > 2 * totalPortfolioValue) {
+      val = 2 * totalPortfolioValue;
     }
-    function makePosition(tick){
-      let cur=3000+Math.random()*9000;
-      let tar=cur+(Math.random()-0.5)*2000;
-      return {
-        name:tick, isPosition:true, expanded:true,
-        currentDollar: roundTo100(cur),
-        targetDollar:  roundTo100(tar),
-        proposedDollar:0,
-        totalDollar:0
-      };
+    node.proposedDollar = val;
+  }
+  renderAll();
+}
+
+/***************************************************************
+ * Recalc & Rerender
+ ***************************************************************/
+function renderAll() {
+  aggregateNode(root);
+  computePercentages(root, root);
+  renderTable();
+  updateCharts();
+}
+
+/***************************************************************
+ * Distributing Risk (Top-Down)
+ ***************************************************************/
+function applyRiskAllocation() {
+  let tVal = totalPortfolioValue;
+  let stocksVal = userStockPct * tVal;
+  let bondsVal  = userBondPct  * tVal;
+  let cashVal   = userCashPct  * tVal;
+  root.children.forEach(ch => {
+    if (/stock/i.test(ch.name)) {
+      ch.targetDollar = stocksVal;
+    } else if (/bond/i.test(ch.name)) {
+      ch.targetDollar = bondsVal;
+    } else if (/cash/i.test(ch.name)) {
+      ch.targetDollar = cashVal;
+    } else {
+      ch.targetDollar = 0;
     }
-    function roundTo100(x){
-      return Math.round(x/100)*100;
+  });
+  root.children.forEach(ch => distributeTargets(ch));
+}
+
+function distributeTargets(node) {
+  if (!node.children || node.children.length === 0) return;
+  let totalCur = node.children.reduce((acc, c) => acc + (c.currentDollar || 0), 0);
+  if (totalCur < 1) totalCur = 1;
+  node.children.forEach(ch => {
+    let ratio = (ch.currentDollar || 0) / totalCur;
+    ch.targetDollar = node.targetDollar * ratio;
+    distributeTargets(ch);
+  });
+}
+
+/***************************************************************
+ * SHIFTING RISK on <select>
+ ***************************************************************/
+function onRiskChange() {
+  let val = document.getElementById('riskSelect').value;
+  if (val === "conservative") {
+    userStockPct = 0.3; userBondPct = 0.5; userCashPct = 0.2;
+  } else if (val === "aggressive") {
+    userStockPct = 0.7; userBondPct = 0.2; userCashPct = 0.1;
+  } else {
+    userStockPct = 0.5; userBondPct = 0.4; userCashPct = 0.1;
+  }
+  document.getElementById('cashTargetInput').value = (userCashPct * 100).toFixed(0);
+  document.getElementById('targetStocks').textContent = (userStockPct * 100).toFixed(0);
+  document.getElementById('targetBonds').textContent  = (userBondPct * 100).toFixed(0);
+  document.getElementById('targetCash').textContent   = (userCashPct * 100).toFixed(0);
+  applyRiskAllocation();
+  renderAll();
+}
+
+/***************************************************************
+ * Listen to changes in the "Cash Target (%)" input
+ ***************************************************************/
+document.getElementById('cashTargetInput').addEventListener('change', () => {
+  let newCashVal = parseFloat(document.getElementById('cashTargetInput').value) || 0;
+  if (newCashVal < 0) newCashVal = 0;
+  if (newCashVal > 100) newCashVal = 100;
+  userCashPct = newCashVal / 100;
+  let oldStock = userStockPct;
+  let oldBond  = userBondPct;
+  let oldSum   = oldStock + oldBond;
+  if (oldSum < 0.0001) {
+    userStockPct = 1 - userCashPct;
+    userBondPct  = 0;
+  } else {
+    let leftover = 1 - userCashPct;
+    userStockPct = leftover * (oldStock / oldSum);
+    userBondPct  = leftover * (oldBond / oldSum);
+  }
+  document.getElementById('targetStocks').textContent = (userStockPct * 100).toFixed(0);
+  document.getElementById('targetBonds').textContent  = (userBondPct * 100).toFixed(0);
+  document.getElementById('targetCash').textContent   = (userCashPct * 100).toFixed(0);
+  applyRiskAllocation();
+  renderAll();
+});
+
+/***************************************************************
+ * Generating & Scaling to Match Portfolio Value
+ ***************************************************************/
+function doGenerateNewClient() {
+  const names = ["John Smith","Jane Doe","Alex Johnson","Maria Garcia","Lee Wong"];
+  let n = names[Math.floor(Math.random() * names.length)];
+  clientName = n;
+  document.getElementById('clientName').textContent = n;
+  let val = 80000 + Math.random() * 40000;
+  val = Math.round(val / 100) * 100;
+  totalPortfolioValue = val;
+  document.getElementById('clientValue').textContent = formatMoney(val);
+  generateRandomNestedData();
+  aggregateNode(root);
+  let sumCur = root.currentDollar || 1;
+  let ratio  = totalPortfolioValue / sumCur;
+  scaleNode(root, ratio);
+  aggregateNode(root);
+  originalData = JSON.parse(JSON.stringify(root));
+  originalPortfolioValue = val;
+  applyRiskAllocation();
+  renderAll();
+}
+
+function scaleNode(node, ratio) {
+  if (!node.children || node.children.length === 0) {
+    node.currentDollar = Math.round(node.currentDollar * ratio);
+    node.targetDollar  = Math.round(node.targetDollar  * ratio);
+    return;
+  }
+  node.children.forEach(ch => scaleNode(ch, ratio));
+}
+
+function doResetTrades() {
+  if (originalData) {
+    root = JSON.parse(JSON.stringify(originalData));
+    totalPortfolioValue = originalPortfolioValue;
+    document.getElementById('clientValue').textContent = formatMoney(totalPortfolioValue);
+    renderAll();
+    document.getElementById('tradeMessage').textContent = "Reset to initial scenario.";
+  }
+}
+
+/***************************************************************
+ * Chart init & update
+ ***************************************************************/
+function initCharts() {
+  currentChart = new Chart(document.getElementById('currentChart'), {
+    type: 'pie',
+    data: {
+      labels: [], 
+      datasets: [{
+        label: 'Current',
+        data: [],
+        backgroundColor: ['#2196f3','#8bc34a','#ffc107','#ff5722']
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      plugins: { legend: { position: 'bottom' } }
     }
-
-    /***************************************************************
-     * Aggregation & Compute %
-     ***************************************************************/
-    function aggregateNode(node){
-      if(!node.children||node.children.length===0){
-        node.totalDollar=(node.currentDollar||0)+(node.proposedDollar||0);
-        return;
-      }
-      let c=0,t=0,p=0,tot=0;
-      node.children.forEach(ch=>{
-        aggregateNode(ch);
-        c+=ch.currentDollar||0; 
-        t+=ch.targetDollar||0; 
-        p+=ch.proposedDollar||0; 
-        tot+=ch.totalDollar||0;
-      });
-      node.currentDollar=c; node.targetDollar=t;
-      node.proposedDollar=p; node.totalDollar=tot;
+  });
+  targetChart = new Chart(document.getElementById('targetChart'), {
+    type: 'pie',
+    data: {
+      labels: [],
+      datasets: [{
+        label: 'Target',
+        data: [],
+        backgroundColor: ['#2196f3','#8bc34a','#ffc107','#ff5722']
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      plugins: { legend: { position: 'bottom' } }
     }
-    function computePercentages(node, rootRef){
-      let denom=(rootRef.targetDollar>0 ? rootRef.targetDollar :1);
-      node.currentPct   =(node.currentDollar   /denom)*100;
-      node.targetPct    =(node.targetDollar    /denom)*100;
-      node.totalPct     =(node.totalDollar     /denom)*100;
-      node.proposedPct  =(node.proposedDollar /denom)*100;
-      if(node.children&&node.children.length>0){
-        node.children.forEach(ch=>computePercentages(ch,rootRef));
-      }
+  });
+  finalChart = new Chart(document.getElementById('finalChart'), {
+    type: 'pie',
+    data: {
+      labels: [],
+      datasets: [{
+        label: 'Total',
+        data: [],
+        backgroundColor: ['#2196f3','#8bc34a','#ffc107','#ff5722']
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      plugins: { legend: { position: 'bottom' } }
     }
+  });
+}
 
-    /***************************************************************
-     * Recalc & Rerender
-     ***************************************************************/
-    function renderAll(){
-      aggregateNode(root);
-      computePercentages(root,root);
-      renderTable();
-      updateCharts();
-    }
+function updateCharts() {
+  let labels = [], curVals = [], tarVals = [], totVals = [];
+  root.children.forEach(ch => {
+    labels.push(ch.name);
+    curVals.push(ch.currentDollar || 0);
+    tarVals.push(ch.targetDollar || 0);
+    totVals.push(ch.totalDollar || 0);
+  });
+  currentChart.data.labels = labels;
+  currentChart.data.datasets[0].data = curVals;
+  currentChart.update();
+  targetChart.data.labels = labels;
+  targetChart.data.datasets[0].data = tarVals;
+  targetChart.update();
+  finalChart.data.labels = labels;
+  finalChart.data.datasets[0].data = totVals;
+  finalChart.update();
+}
 
-    /***************************************************************
-     * Table Rendering
-     ***************************************************************/
-    function renderTable(){
-      let tb=document.getElementById('portfolioRows');
-      tb.innerHTML="";
-      root.children.forEach(a=>renderNode(a,0));
-      buildTotalRow();
-    }
-    function renderNode(node,level){
-      let tr=document.createElement('tr');
-      if(node.isClass)tr.classList.add('class-row');
-      else if(node.isPosition)tr.classList.add('position-row');
-      else if(node.isAsset)tr.classList.add('asset-row');
+/***************************************************************
+ * Utility Functions
+ ***************************************************************/
+function formatMoney(x) {
+  return new Intl.NumberFormat('en-US', {
+    style: 'decimal',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }).format(x);
+}
 
-      let tdName=document.createElement('td');
-      if(node.isAsset)tdName.className='asset-col';
-      if(node.children&&node.children.length>0){
-        let toggler=document.createElement('span');
-        toggler.className='expand-toggle';
-        toggler.textContent=node.expanded?"▼":"▶";
-        toggler.onclick=()=>{
-          node.expanded=!node.expanded;
-          renderAll();
-        };
-        tdName.appendChild(toggler);
-      }
-      tdName.appendChild(document.createTextNode(node.name));
-      tr.appendChild(tdName);
+function colorDeltaCell(td, val) {
+  td.classList.remove('delta-positive', 'delta-negative');
+  let r = parseFloat(val.toFixed(2));
+  if (Math.abs(r) < 0.01) {
+    // zero => no special color
+  } else if (r < 0) {
+    td.classList.add('delta-negative');
+  } else {
+    td.classList.add('delta-positive');
+  }
+}
 
-      // (1) Current($)
-      let tdCur=document.createElement('td');
-      tdCur.textContent=formatMoney(node.currentDollar||0);
-      tr.appendChild(tdCur);
+function withSignMoney(value) {
+  let r = parseFloat(value.toFixed(2));
+  if (Math.abs(r) < 0.01) r = 0;
+  let absVal = Math.abs(r);
+  let absStr = formatMoney(absVal);
+  if (r > 0) return `+${absStr}`;
+  if (r < 0) return `-${absStr}`;
+  return absStr;
+}
 
-      // (2) Target($)
-      let tdTar=document.createElement('td');
-      tdTar.textContent=formatMoney(node.targetDollar||0);
-      tr.appendChild(tdTar);
+function withSignPct(value) {
+  let r = parseFloat(value.toFixed(2));
+  if (Math.abs(r) < 0.01) r = 0;
+  let absVal = Math.abs(r).toFixed(2);
+  if (r > 0) return `+${absVal}%`;
+  if (r < 0) return `-${absVal}%`;
+  return "0.00%";
+}
 
-      // (3) Delta($)= target - total
-      let dval=(node.targetDollar||0)-(node.totalDollar||0);
-      let tdDelta=document.createElement('td');
-      tdDelta.textContent=withSignMoney(dval);
-      colorDeltaCell(tdDelta,dval);
-      tr.appendChild(tdDelta);
-
-      // (4) Proposed($)
-      let tdProp=document.createElement('td');
-      tdProp.className='proposed-col';
-      let pd=node.proposedDollar||0;
-      if(Math.abs(pd)>0.01){
-        if(pd>0)tdProp.classList.add('proposed-positive');
-        else    tdProp.classList.add('proposed-negative');
-      }
-      tdProp.textContent=formatMoney(pd);
-      tdProp.onclick=()=>editProposedCell(tdProp,node,'dollar');
-      tr.appendChild(tdProp);
-
-      // (5) Total($)
-      let tdTot=document.createElement('td');
-      tdTot.textContent=formatMoney(node.totalDollar||0);
-      tr.appendChild(tdTot);
-
-      // (6) Current(%)
-      let tdCurPct=document.createElement('td');
-      tdCurPct.textContent=(node.currentPct||0).toFixed(2)+"%";
-      tr.appendChild(tdCurPct);
-
-      // (7) Target(%)
-      let tdTarPct=document.createElement('td');
-      tdTarPct.textContent=(node.targetPct||0).toFixed(2)+"%";
-      tr.appendChild(tdTarPct);
-
-      // (8) Delta(%)
-      let dp=(node.targetPct||0)-(node.totalPct||0);
-      let tdDeltaPct=document.createElement('td');
-      tdDeltaPct.textContent=withSignPct(dp);
-      colorDeltaCell(tdDeltaPct,dp);
-      tr.appendChild(tdDeltaPct);
-
-      // (9) Proposed(%)
-      let tdPropPct=document.createElement('td');
-      tdPropPct.className='proposed-col';
-      let pp=node.proposedPct||0;
-      if(Math.abs(pp)>0.01){
-        if(pp>0)tdPropPct.classList.add('proposed-positive');
-        else    tdPropPct.classList.add('proposed-negative');
-      }
-      tdPropPct.textContent=pp.toFixed(2)+"%";
-      tdPropPct.onclick=()=>editProposedCell(tdPropPct,node,'percent');
-      tr.appendChild(tdPropPct);
-
-      // (10) Total(%)
-      let tdTotPct=document.createElement('td');
-      let tp=node.totalPct||0;
-      tdTotPct.textContent=tp.toFixed(2)+"%";
-      tr.appendChild(tdTotPct);
-
-      document.getElementById('portfolioRows').appendChild(tr);
-
-      // children
-      if(node.expanded&&node.children&&node.children.length>0){
-        node.children.forEach(ch=>renderNode(ch,level+1));
-      }
-    }
-    function buildTotalRow(){
-      let tb=document.getElementById('portfolioRows');
-      let cDollar =root.currentDollar  ||0;
-      let tDollar =root.targetDollar   ||0;
-      let pDollar =root.proposedDollar ||0;
-      let totDollar=root.totalDollar   ||0;
-      let dval=tDollar-totDollar;
-      let dpct=(root.targetPct||0)-(root.totalPct||0);
-      let tr=document.createElement('tr');
-      tr.classList.add('total-row');
-
-      let tdLabel=document.createElement('td');
-      tdLabel.textContent="Total Portfolio";
-      tr.appendChild(tdLabel);
-
-      let tdCurr=document.createElement('td');
-      tdCurr.textContent=formatMoney(cDollar);
-      tr.appendChild(tdCurr);
-
-      let tdTarg=document.createElement('td');
-      tdTarg.textContent=formatMoney(tDollar);
-      tr.appendChild(tdTarg);
-
-      let tdDelta=document.createElement('td');
-      tdDelta.textContent=withSignMoney(dval);
-      colorDeltaCell(tdDelta,dval);
-      tr.appendChild(tdDelta);
-
-      let tdProp=document.createElement('td');
-      tdProp.textContent=formatMoney(pDollar);
-      tr.appendChild(tdProp);
-
-      let tdTot=document.createElement('td');
-      tdTot.textContent=formatMoney(totDollar);
-      tr.appendChild(tdTot);
-
-      let tdCurrPct=document.createElement('td');
-      tdCurrPct.textContent=(root.currentPct||0).toFixed(2)+"%";
-      tr.appendChild(tdCurrPct);
-
-      let tdTargPct=document.createElement('td');
-      tdTargPct.textContent=(root.targetPct||0).toFixed(2)+"%";
-      tr.appendChild(tdTargPct);
-
-      let tdDeltaPct=document.createElement('td');
-      tdDeltaPct.textContent=withSignPct(dpct);
-      colorDeltaCell(tdDeltaPct,dpct);
-      tr.appendChild(tdDeltaPct);
-
-      let tdPropPct=document.createElement('td');
-      tdPropPct.textContent=(root.proposedPct||0).toFixed(2)+"%";
-      tr.appendChild(tdPropPct);
-
-      let tdTotPct=document.createElement('td');
-      tdTotPct.textContent=(root.totalPct||0).toFixed(2)+"%";
-      tr.appendChild(tdTotPct);
-
-      tb.appendChild(tr);
-    }
-
-    /***************************************************************
-     * Proposed Editing
-     ***************************************************************/
-    function editProposedCell(cell,node,mode){
-      let oldVal=cell.textContent.replace(/,/g,'').replace(/[^\d.\-+]/g,'');
-      cell.onclick=null;
-      cell.innerHTML='';
-      let input=document.createElement('input');
-      input.type='text';
-      input.value=oldVal||'0';
-      setTimeout(()=>input.select(),0);
-      input.onblur=()=>finishProposedEdit(cell,node,input.value,mode);
-      input.onkeydown=(ev)=>{
-        if(ev.key==='Enter'){
-          ev.preventDefault();
-          input.blur();
-        }
-      };
-      cell.appendChild(input);
-      input.focus();
-    }
-    function finishProposedEdit(cell,node,rawVal,mode){
-      rawVal=rawVal.replace(/,/g,'');
-      let val=parseFloat(rawVal);
-      if(isNaN(val)) val=0;
-      if(mode==='percent'){
-        if(val>200) val=200;
-        let rt=(root.targetDollar>0 ? root.targetDollar:1);
-        node.proposedDollar=(val/100)*rt;
-      } else {
-        if(val>2*totalPortfolioValue) val=2*totalPortfolioValue;
-        node.proposedDollar=val;
-      }
-      renderAll();
-    }
-
-    /***************************************************************
-     * Risk Rebalancing
-     ***************************************************************/
-    function applyRiskAllocation(){
-      let tVal=totalPortfolioValue;
-      let stocksVal=userStockPct*tVal;
-      let bondsVal =userBondPct *tVal;
-      let cashVal  =userCashPct *tVal;
-      let realEVal=userRePct   *tVal;
-      root.children.forEach(ch=>{
-        if(/stock/i.test(ch.name)) ch.targetDollar=stocksVal;
-        else if(/bond/i.test(ch.name)) ch.targetDollar=bondsVal;
-        else if(/cash/i.test(ch.name)) ch.targetDollar=cashVal;
-        else if(/real estate/i.test(ch.name)) ch.targetDollar=realEVal;
-        else ch.targetDollar=0;
-      });
-      root.children.forEach(ch=>distributeTargets(ch));
-    }
-    function distributeTargets(node){
-      if(!node.children||node.children.length===0)return;
-      let totalCur=node.children.reduce((acc,c)=>acc+(c.currentDollar||0),0);
-      if(totalCur<1) totalCur=1;
-      node.children.forEach(ch=>{
-        let ratio=(ch.currentDollar||0)/totalCur;
-        ch.targetDollar=node.targetDollar*ratio;
-        distributeTargets(ch);
-      });
-    }
-
-    /***************************************************************
-     * SHIFTING RISK
-     ***************************************************************/
-    function onRiskChange(){
-      let val=document.getElementById('riskSelect').value;
-      if(val==="conservative"){
-        userStockPct=0.3; userBondPct=0.5; userCashPct=0.2; userRePct=0;
-      } else if(val==="aggressive"){
-        userStockPct=0.7; userBondPct=0.2; userCashPct=0.1; userRePct=0;
-      } else {
-        userStockPct=0.5; userBondPct=0.4; userCashPct=0.1; userRePct=0;
-      }
-      document.getElementById('cashTargetInput').value=(userCashPct*100).toFixed(0);
-      document.getElementById('targetStocks').textContent=(userStockPct*100).toFixed(0);
-      document.getElementById('targetBonds').textContent =(userBondPct*100).toFixed(0);
-      document.getElementById('targetCash').textContent  =(userCashPct*100).toFixed(0);
-
-      applyRiskAllocation();
-      renderAll();
-    }
-    document.getElementById('cashTargetInput').addEventListener('change',()=>{
-      let newCashVal=parseFloat(document.getElementById('cashTargetInput').value)||0;
-      if(newCashVal<0)newCashVal=0; if(newCashVal>100)newCashVal=100;
-      userCashPct=newCashVal/100;
-      let oldStock=userStockPct; let oldBond=userBondPct; let oldRe=userRePct;
-      let oldSum=oldStock+oldBond+oldRe;
-      let leftover=1-userCashPct;
-      if(oldSum<0.0001){
-        userStockPct=leftover; userBondPct=0; userRePct=0;
-      } else {
-        let ratio=leftover/oldSum;
-        userStockPct*=ratio; userBondPct*=ratio; userRePct*=ratio;
-      }
-      document.getElementById('targetStocks').textContent=(userStockPct*100).toFixed(0);
-      document.getElementById('targetBonds').textContent =(userBondPct*100).toFixed(0);
-      document.getElementById('targetCash').textContent  =(userCashPct*100).toFixed(0);
-
-      applyRiskAllocation();
-      renderAll();
-    });
-
-    /***************************************************************
-     * Generate & Scale
-     ***************************************************************/
-    function doGenerateNewClient(){
-      const names=["John Smith","Jane Doe","Alex Johnson","Maria Garcia","Lee Wong"];
-      let n=names[Math.floor(Math.random()*names.length)];
-      clientName=n;
-      document.getElementById('clientName').textContent=n;
-
-      let val=80000+Math.random()*40000; //80k-120k
-      val=Math.round(val/100)*100;
-      totalPortfolioValue=val;
-      document.getElementById('clientValue').textContent=formatMoney(val);
-
-      generateRandomNestedData();
-      aggregateNode(root);
-      let sumCur=root.currentDollar||1;
-      let ratio=totalPortfolioValue/sumCur;
-      scaleNode(root,ratio);
-      aggregateNode(root);
-
-      originalData=JSON.parse(JSON.stringify(root));
-      originalPortfolioValue=val;
-
-      applyRiskAllocation();
-      renderAll();
-    }
-    function scaleNode(node,ratio){
-      if(!node.children||node.children.length===0){
-        node.currentDollar=Math.round(node.currentDollar*ratio);
-        node.targetDollar=Math.round(node.targetDollar*ratio);
-        return;
-      }
-      node.children.forEach(ch=>scaleNode(ch,ratio));
-    }
-    function doResetTrades(){
-      if(originalData){
-        root=JSON.parse(JSON.stringify(originalData));
-        totalPortfolioValue=originalPortfolioValue;
-        document.getElementById('clientValue').textContent=formatMoney(totalPortfolioValue);
-        renderAll();
-        document.getElementById('tradeMessage').textContent="Reset to initial scenario.";
-      }
-    }
-
-    /***************************************************************
-     * Rebalance
-     ***************************************************************/
-    function doRebalance(){
-      setProposedRebalance(root);
-      renderAll();
-      document.getElementById('tradeMessage').textContent="Rebalanced to target allocations.";
-    }
-    function setProposedRebalance(node){
-      if(!node.children||node.children.length===0){
-        node.proposedDollar=(node.targetDollar||0)-(node.currentDollar||0);
-        return;
-      }
-      node.children.forEach(ch=>setProposedRebalance(ch));
-    }
-
-    /***************************************************************
-     * Charts
-     ***************************************************************/
-    function initCharts(){
-      currentChart=new Chart(document.getElementById('currentChart'),{
-        type:'pie',
-        data:{
-          labels:[], 
-          datasets:[{
-            label:'Current',
-            data:[],
-            backgroundColor:['#2196f3','#8bc34a','#ffc107','#ff5722']
-          }]
-        },
-        options:{
-          responsive:true,
-          maintainAspectRatio:true,
-          plugins:{ legend:{ position:'bottom' } }
-        }
-      });
-      targetChart=new Chart(document.getElementById('targetChart'),{
-        type:'pie',
-        data:{
-          labels:[],
-          datasets:[{
-            label:'Target',
-            data:[],
-            backgroundColor:['#2196f3','#8bc34a','#ffc107','#ff5722']
-          }]
-        },
-        options:{
-          responsive:true,
-          maintainAspectRatio:true,
-          plugins:{ legend:{ position:'bottom' } }
-        }
-      });
-      finalChart=new Chart(document.getElementById('finalChart'),{
-        type:'pie',
-        data:{
-          labels:[],
-          datasets:[{
-            label:'Total',
-            data:[],
-            backgroundColor:['#2196f3','#8bc34a','#ffc107','#ff5722']
-          }]
-        },
-        options:{
-          responsive:true,
-          maintainAspectRatio:true,
-          plugins:{ legend:{ position:'bottom' } }
-        }
-      });
-    }
-    function updateCharts(){
-      let labels=[],curVals=[],tarVals=[],totVals=[];
-      root.children.forEach(ch=>{
-        labels.push(ch.name);
-        curVals.push(ch.currentDollar||0);
-        tarVals.push(ch.targetDollar||0);
-        totVals.push(ch.totalDollar||0);
-      });
-      currentChart.data.labels=labels;
-      currentChart.data.datasets[0].data=curVals;
-      currentChart.update();
-
-      targetChart.data.labels=labels;
-      targetChart.data.datasets[0].data=tarVals;
-      targetChart.update();
-
-      finalChart.data.labels=labels;
-      finalChart.data.datasets[0].data=totVals;
-      finalChart.update();
-    }
-
-    /***************************************************************
-     * Utility
-     ***************************************************************/
-    function formatMoney(x){
-      return new Intl.NumberFormat('en-US',{
-        style:'decimal',
-        minimumFractionDigits:2,
-        maximumFractionDigits:2
-      }).format(x);
-    }
-    function colorDeltaCell(td,val){
-      td.classList.remove('delta-positive','delta-negative');
-      let r=parseFloat(val.toFixed(2));
-      if(Math.abs(r)<0.01){
-        // zero => no color
-      } else if(r<0){
-        td.classList.add('delta-negative');
-      } else {
-        td.classList.add('delta-positive');
-      }
-    }
-    function withSignMoney(v){
-      let r=parseFloat(v.toFixed(2));
-      if(Math.abs(r)<0.01)r=0;
-      let absVal=Math.abs(r);
-      let absStr=formatMoney(absVal);
-      if(r>0)return `+${absStr}`;
-      if(r<0)return `-${absStr}`;
-      return absStr;
-    }
-    function withSignPct(v){
-      let r=parseFloat(v.toFixed(2));
-      if(Math.abs(r)<0.01)r=0;
-      let absVal=Math.abs(r).toFixed(2);
-      if(r>0)return `+${absVal}%`;
-      if(r<0)return `-${absVal}%`;
-      return "0.00%";
-    }
-
-    /***************************************************************
-     * Enable Editing of Portfolio Value
-     ***************************************************************/
-    function enablePortfolioValueEdit(){
-      const valElem=document.getElementById('clientValue');
-      valElem.addEventListener('click',function(){
-        const oldVal=valElem.textContent.replace(/,/g,'').replace(/[^\d.\-+]/g,'');
-        valElem.innerHTML='';
-        const input=document.createElement('input');
-        input.type='text';
-        input.value=oldVal||'0';
-        input.onblur=function(){
-          let parsed=parseFloat(input.value.replace(/,/g,''))||0;
-          if(parsed<1)parsed=1;
-          totalPortfolioValue=parsed;
-          valElem.innerHTML=formatMoney(parsed);
-          onRiskChange();
-        };
-        input.onkeydown=function(e){
-          if(e.key==='Enter'){
-            e.preventDefault();
-            input.blur();
-          }
-        };
-        valElem.appendChild(input);
-        input.select();
-      });
-    }
-
-    /***************************************************************
-     * STARTUP
-     ***************************************************************/
-    window.addEventListener('DOMContentLoaded',()=>{
-      initCharts();
-      enablePortfolioValueEdit();
-      document.getElementById('riskSelect').addEventListener('change',onRiskChange);
-      document.getElementById('newClientBtn').addEventListener('click',doGenerateNewClient);
-      document.getElementById('resetTradesBtn').addEventListener('click',doResetTrades);
-      document.getElementById('rebalanceBtn').addEventListener('click',doRebalance);
-
+/***************************************************************
+ * Enable Editing of Portfolio Value (clientValue)
+ ***************************************************************/
+function enablePortfolioValueEdit() {
+  const valElem = document.getElementById('clientValue');
+  valElem.addEventListener('click', function onClick() {
+    const oldVal = valElem.textContent.replace(/,/g, '').replace(/[^\d.\-+]/g, '');
+    valElem.innerHTML = '';
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.value = oldVal || '0';
+    input.onblur = function() {
+      let parsed = parseFloat(input.value.replace(/,/g, '')) || 0;
+      if (parsed < 1) parsed = 1;
+      totalPortfolioValue = parsed;
+      valElem.innerHTML = formatMoney(parsed);
       onRiskChange();
-      doGenerateNewClient();
-    });
-  </script>
+    };
+    input.onkeydown = function(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        input.blur();
+      }
+    };
+    valElem.appendChild(input);
+    input.select();
+  });
+}
+
+/***************************************************************
+ * Startup
+ ***************************************************************/
+window.addEventListener('DOMContentLoaded', () => {
+  initCharts();
+  enablePortfolioValueEdit();
+  document.getElementById('riskSelect').addEventListener('change', onRiskChange);
+  document.getElementById('newClientBtn').addEventListener('click', doGenerateNewClient);
+  document.getElementById('resetTradesBtn').addEventListener('click', doResetTrades);
+  onRiskChange();
+  doGenerateNewClient();
+});
+</script>
 </body>
 </html>
