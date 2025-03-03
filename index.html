@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
-  <title>Portfolio Manager Simulator – Phase 2 (Working Version)</title>
+  <title>Portfolio Manager Simulator – Phase 2 (Side-by-Side, Rebalance)</title>
   <style>
     :root {
       --bg-body: #f8f9fa;
@@ -83,9 +83,14 @@
       border-bottom: 1px solid #ddd;
       padding-bottom: 1rem;
     }
-    /* For custom profile form */
-    #custom-profile-section {
-      margin-top: 1rem;
+    .top-row {
+      display: flex;
+      gap: 2rem;
+      margin-bottom: 1.5rem;
+    }
+    .profile-col, .enhancements-col {
+      flex: 1;
+      min-width: 320px;
     }
     #custom-profile-section label {
       display: inline-block; 
@@ -94,20 +99,6 @@
     #custom-profile-section input[type="number"] {
       width: 60px;
       margin-right: 1rem;
-    }
-    /* Profile layout */
-    #client-profile {
-      display: flex; 
-      justify-content: space-between; 
-      flex-wrap: wrap;
-    }
-    .profile-info {
-      flex: 1; 
-      min-width: 320px; 
-      margin-right: 1rem;
-    }
-    .profile-actions { 
-      margin-top: 1rem; 
     }
     #riskSelect { 
       margin-left: 0.5rem; 
@@ -273,82 +264,90 @@
   <div class="dark-mode-toggle" id="darkModeToggle"></div>
 
   <div class="container">
-    <h1>Portfolio Manager Simulator – Phase 2 (Working Version)</h1>
-
-    <!-- Phase 2 Enhancements Section -->
-    <div class="section">
-      <h2>Phase 2 Enhancements</h2>
-
-      <!-- Export / Import -->
-      <button class="btn" id="exportJSONBtn">Export JSON</button>
-      <input type="file" id="importJSONFile" accept=".json" style="display:none"/>
-      <button class="btn" id="importJSONBtn">Import JSON</button>
-
-      <!-- Custom Profiles -->
-      <div id="custom-profile-section">
-        <h3>Create & Apply Custom Profile</h3>
-        <div>
-          <label>Stocks (%):</label>
-          <input type="number" id="customStockPct" value="40"/>
-          <label>Bonds (%):</label>
-          <input type="number" id="customBondPct" value="30"/>
-        </div>
-        <div>
-          <label>Cash (%):</label>
-          <input type="number" id="customCashPct" value="20"/>
-          <label>Real Estate (%):</label>
-          <input type="number" id="customRePct" value="10"/>
-        </div>
-        <div>
-          <button class="btn" id="saveProfileBtn">Save as New Profile</button>
-        </div>
-        <div style="margin-top:0.5rem;">
-          <label>Apply Custom Profile:</label>
-          <select id="customProfilesSelect">
-            <option value="">--No custom profile selected--</option>
-          </select>
-          <button class="btn" id="applyProfileBtn">Apply</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Client Profile Section -->
-    <div class="section" id="client-profile">
-      <div class="profile-info">
-        <p><strong>Name:</strong> <span id="clientName">--</span></p>
-        <p>
-          <strong>Risk Tolerance:</strong>
-          <select id="riskSelect">
-            <option value="conservative">Conservative</option>
-            <option value="moderate" selected>Moderate</option>
-            <option value="aggressive">Aggressive</option>
-          </select>
-        </p>
-        <p>
-          <strong>Portfolio Value:</strong>
-          $<span id="clientValue" class="editable-field">0</span>
-        </p>
-        <p>
-          <strong>Target Allocation:</strong>
-          <span id="targetStocks">--</span>% Stocks, 
-          <span id="targetBonds">--</span>% Bonds, 
-          <span id="targetCash">--</span>% Cash
-        </p>
-        <p>
-          <strong>Cash Target (%):</strong>
-          <input type="number" id="cashTargetInput" value="10" min="0" max="100" step="1"/>
-        </p>
-        <div class="profile-actions">
-          <button class="btn" id="newClientBtn">Generate New Client</button>
+    <h1>Portfolio Manager Simulator – Phase 2 (Side-by-Side, Rebalance)</h1>
+    
+    <!-- Side-by-side top row: left = Client Profile, right = Enhancements -->
+    <div class="top-row">
+      
+      <!-- LEFT COLUMN: Client Profile -->
+      <div class="profile-col">
+        <h2>Client Profile</h2>
+        <div class="profile-info">
+          <p><strong>Name:</strong> <span id="clientName">--</span></p>
+          <p>
+            <strong>Risk Tolerance:</strong>
+            <select id="riskSelect">
+              <option value="conservative">Conservative</option>
+              <option value="moderate" selected>Moderate</option>
+              <option value="aggressive">Aggressive</option>
+            </select>
+          </p>
+          <p>
+            <strong>Portfolio Value:</strong>
+            $<span id="clientValue" class="editable-field">0</span>
+          </p>
+          <p>
+            <strong>Target Allocation:</strong>
+            <span id="targetStocks">--</span>% Stocks, 
+            <span id="targetBonds">--</span>% Bonds, 
+            <span id="targetCash">--</span>% Cash
+          </p>
+          <p>
+            <strong>Cash Target (%):</strong>
+            <input type="number" id="cashTargetInput" value="10" min="0" max="100" step="1"/>
+          </p>
+          <div class="profile-actions">
+            <button class="btn" id="newClientBtn">Generate New Client</button>
+          </div>
         </div>
       </div>
-    </div>
-
-    <!-- Table & Charts -->
+      
+      <!-- RIGHT COLUMN: Phase 2 Enhancements (Import/Export, Custom Profiles) -->
+      <div class="enhancements-col">
+        <h2>Phase 2 Enhancements</h2>
+        
+        <!-- Export / Import -->
+        <button class="btn" id="exportJSONBtn">Export JSON</button>
+        <input type="file" id="importJSONFile" accept=".json" style="display:none"/>
+        <button class="btn" id="importJSONBtn">Import JSON</button>
+        
+        <!-- Custom Profiles -->
+        <div id="custom-profile-section">
+          <h3>Create & Apply Custom Profile</h3>
+          <div>
+            <label>Stocks (%):</label>
+            <input type="number" id="customStockPct" value="40"/>
+            <label>Bonds (%):</label>
+            <input type="number" id="customBondPct" value="30"/>
+          </div>
+          <div>
+            <label>Cash (%):</label>
+            <input type="number" id="customCashPct" value="20"/>
+            <label>Real Estate (%):</label>
+            <input type="number" id="customRePct" value="10"/>
+          </div>
+          <div>
+            <button class="btn" id="saveProfileBtn">Save as New Profile</button>
+          </div>
+          <div style="margin-top:0.5rem;">
+            <label>Apply Custom Profile:</label>
+            <select id="customProfilesSelect">
+              <option value="">--No custom profile selected--</option>
+            </select>
+            <button class="btn" id="applyProfileBtn">Apply</button>
+          </div>
+        </div>
+      </div>
+      
+    </div><!-- .top-row ends -->
+    
+    <!-- Portfolio Table & Charts -->
     <div class="section">
       <div class="portfolio-header">
         <h2>Current (or Projected) Portfolio</h2>
         <div class="portfolio-buttons">
+          <!-- Rebalance button to the left of Reset Trades -->
+          <button class="btn" id="rebalanceBtn">Rebalance</button>
           <button class="btn" id="resetTradesBtn">Reset Trades</button>
         </div>
       </div>
@@ -391,7 +390,7 @@
   </div>
 
   <div class="footer">
-    &copy; Phase 2 Example – Import/Export & Custom Profiles
+    &copy; Phase 2 – Side-by-Side Layout and Rebalance
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -409,14 +408,12 @@
     let totalPortfolioValue = 0;
     let originalPortfolioValue = 0;
 
-    let userStockPct = 0.5,
-        userBondPct  = 0.4,
-        userCashPct  = 0.1,
-        userRePct    = 0; // Real Estate
+    let userStockPct = 0.5;
+    let userBondPct  = 0.4;
+    let userCashPct  = 0.1;
+    let userRePct    = 0; // Real Estate
 
     let currentChart, targetChart, finalChart;
-
-    // In-memory store for custom profiles
     let customProfiles = {};
 
     /***************************************************************
@@ -428,7 +425,7 @@
     });
 
     /***************************************************************
-     * IMPORT / EXPORT
+     * IMPORT / EXPORT JSON
      ***************************************************************/
     function exportJSON() {
       let dataToExport = {
@@ -446,9 +443,8 @@
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
     }
-
-    function onImportJSONFileChange(event) {
-      let file = event.target.files[0];
+    function onImportJSONFileChange(ev) {
+      let file = ev.target.files[0];
       if (!file) return;
       let reader = new FileReader();
       reader.onload = function(e) {
@@ -487,7 +483,6 @@
       let profileName = prompt("Enter a name for this profile:", "MyCustomProfile");
       if (!profileName) return;
 
-      // Save
       customProfiles[profileName] = {
         stocks: s/100,
         bonds:  b/100,
@@ -495,7 +490,6 @@
         re:     re/100
       };
 
-      // Add to dropdown
       let sel = document.getElementById('customProfilesSelect');
       let opt = document.createElement('option');
       opt.value = profileName;
@@ -504,7 +498,6 @@
 
       alert("Profile saved! You can now apply it from the dropdown.");
     }
-
     function doApplyCustomProfile() {
       let selVal = document.getElementById('customProfilesSelect').value;
       if (!selVal || !customProfiles[selVal]) {
@@ -526,7 +519,7 @@
     }
 
     /***************************************************************
-     * GENERATE RANDOM DATA
+     * GENERATE RANDOM NESTED DATA
      ***************************************************************/
     function generateRandomNestedData() {
       root.children = [];
@@ -553,18 +546,16 @@
           makePosition("FIZZ")
         ]
       });
-
       bonds.children.push(makePosition("Corp Bond A"));
       bonds.children.push(makePosition("Gov Bond B"));
 
-      cash.currentDollar = roundTo100(3000 + Math.random() * 2000);
+      cash.currentDollar = roundTo100(3000 + Math.random()*2000);
       cash.targetDollar  = 0;
 
       realE.children.push(makePosition("REIT Fund"));
 
       root.children.push(stocks, bonds, cash, realE);
     }
-
     function makePosition(ticker) {
       let cur = 3000 + Math.random()*9000;
       let tar = cur + (Math.random() - 0.5)*2000;
@@ -578,13 +569,12 @@
         totalDollar: 0
       };
     }
-
     function roundTo100(x) {
       return Math.round(x / 100)*100;
     }
 
     /***************************************************************
-     * AGGREGATION & PERCENTAGES
+     * AGGREGATION & PERCENTAGE
      ***************************************************************/
     function aggregateNode(node) {
       if (!node.children || node.children.length === 0) {
@@ -604,7 +594,6 @@
       node.proposedDollar  = p;
       node.totalDollar     = tot;
     }
-
     function computePercentages(node, rootRef) {
       let denom = (rootRef.targetDollar > 0 ? rootRef.targetDollar : 1);
       node.currentPct   = (node.currentDollar   / denom) * 100;
@@ -625,7 +614,6 @@
       root.children.forEach(asset => renderNode(asset, 0));
       buildTotalRow();
     }
-
     function renderNode(node, level) {
       const tr = document.createElement('tr');
       if (node.isClass)         tr.classList.add('class-row');
@@ -718,6 +706,7 @@
 
       document.getElementById('portfolioRows').appendChild(tr);
 
+      // If expanded, render children
       if (node.expanded && node.children && node.children.length > 0) {
         node.children.forEach(ch => renderNode(ch, level + 1));
       }
@@ -729,8 +718,9 @@
       let tDollar   = root.targetDollar    || 0;
       let pDollar   = root.proposedDollar  || 0;
       let totDollar = root.totalDollar     || 0;
-      let dval = tDollar - totDollar; 
+      let dval = tDollar - totDollar;
       let dpct = (root.targetPct || 0) - (root.totalPct || 0);
+
       let tr = document.createElement('tr');
       tr.classList.add('total-row');
 
@@ -795,7 +785,7 @@
     }
 
     /***************************************************************
-     * PROPOSED CELL EDITING
+     * PROPOSED EDITING
      ***************************************************************/
     function editProposedCell(cell, node, mode) {
       let oldVal = cell.textContent.replace(/,/g, '').replace(/[^\d.\-+]/g, '');
@@ -816,11 +806,11 @@
       cell.appendChild(input);
       input.focus();
     }
-
     function finishProposedEdit(cell, node, rawVal, mode) {
       rawVal = rawVal.replace(/,/g, '');
       let val = parseFloat(rawVal);
       if (isNaN(val)) val = 0;
+
       if (mode === 'percent') {
         if (val > 200) val = 200;
         let rt = (root.targetDollar > 0 ? root.targetDollar : 1);
@@ -830,7 +820,7 @@
         if (val > 2 * totalPortfolioValue) {
           val = 2 * totalPortfolioValue;
         }
-        // Negative allowed
+        // negative is allowed
         node.proposedDollar = val;
       }
       renderAll();
@@ -854,7 +844,7 @@
       let stocksVal = userStockPct * tVal;
       let bondsVal  = userBondPct  * tVal;
       let cashVal   = userCashPct  * tVal;
-      let realEVal  = userRePct    * tVal; // for Real Estate
+      let realEVal  = userRePct    * tVal;
 
       root.children.forEach(ch => {
         if (/stock/i.test(ch.name)) {
@@ -871,7 +861,6 @@
       });
       root.children.forEach(ch => distributeTargets(ch));
     }
-
     function distributeTargets(node) {
       if (!node.children || node.children.length === 0) return;
       let totalCur = node.children.reduce((acc, c) => acc + (c.currentDollar || 0), 0);
@@ -884,22 +873,22 @@
     }
 
     /***************************************************************
-     * SHIFTING RISK ON <SELECT>
+     * SHIFTING RISK ON <select>
      ***************************************************************/
     function onRiskChange() {
       let val = document.getElementById('riskSelect').value;
       if (val === "conservative") {
-        userStockPct = 0.3; userBondPct = 0.5; userCashPct = 0.2; userRePct = 0;
+        userStockPct=0.3; userBondPct=0.5; userCashPct=0.2; userRePct=0;
       } else if (val === "aggressive") {
-        userStockPct = 0.7; userBondPct = 0.2; userCashPct = 0.1; userRePct = 0;
+        userStockPct=0.7; userBondPct=0.2; userCashPct=0.1; userRePct=0;
       } else {
-        // moderate
-        userStockPct = 0.5; userBondPct = 0.4; userCashPct = 0.1; userRePct = 0;
+        userStockPct=0.5; userBondPct=0.4; userCashPct=0.1; userRePct=0;
       }
       document.getElementById('cashTargetInput').value = (userCashPct * 100).toFixed(0);
       document.getElementById('targetStocks').textContent = (userStockPct*100).toFixed(0);
       document.getElementById('targetBonds').textContent  = (userBondPct*100).toFixed(0);
       document.getElementById('targetCash').textContent   = (userCashPct*100).toFixed(0);
+
       applyRiskAllocation();
       renderAll();
     }
@@ -946,7 +935,7 @@
       clientName = n;
       document.getElementById('clientName').textContent = n;
 
-      let val = 80000 + Math.random() * 40000; // 80k-120k
+      let val = 80000 + Math.random() * 40000;
       val = Math.round(val / 100) * 100;
       totalPortfolioValue = val;
       document.getElementById('clientValue').textContent = formatMoney(val);
@@ -985,6 +974,23 @@
     }
 
     /***************************************************************
+     * REBALANCE BUTTON
+     * Sets Proposed($) = Target($) - Current($) on each leaf node
+     ***************************************************************/
+    function doRebalance() {
+      setProposedRebalance(root);
+      renderAll();
+      document.getElementById('tradeMessage').textContent = "Rebalanced to target allocations.";
+    }
+    function setProposedRebalance(node) {
+      if (!node.children || node.children.length === 0) {
+        node.proposedDollar = (node.targetDollar || 0) - (node.currentDollar || 0);
+        return;
+      }
+      node.children.forEach(ch => setProposedRebalance(ch));
+    }
+
+    /***************************************************************
      * CHART INIT & UPDATE
      ***************************************************************/
     function initCharts() {
@@ -995,7 +1001,7 @@
           datasets: [{
             label: 'Current',
             data: [],
-            backgroundColor: ['#2196f3', '#8bc34a', '#ffc107', '#ff5722']
+            backgroundColor: ['#2196f3','#8bc34a','#ffc107','#ff5722']
           }]
         },
         options: {
@@ -1012,7 +1018,7 @@
           datasets: [{
             label: 'Target',
             data: [],
-            backgroundColor: ['#2196f3', '#8bc34a', '#ffc107', '#ff5722']
+            backgroundColor: ['#2196f3','#8bc34a','#ffc107','#ff5722']
           }]
         },
         options: {
@@ -1029,7 +1035,7 @@
           datasets: [{
             label: 'Total',
             data: [],
-            backgroundColor: ['#2196f3', '#8bc34a', '#ffc107', '#ff5722']
+            backgroundColor: ['#2196f3','#8bc34a','#ffc107','#ff5722']
           }]
         },
         options: {
@@ -1076,7 +1082,7 @@
       td.classList.remove('delta-positive', 'delta-negative');
       let r = parseFloat(val.toFixed(2));
       if (Math.abs(r) < 0.01) {
-        // zero => no color
+        // zero => no special color
       } else if (r < 0) {
         td.classList.add('delta-negative');
       } else {
@@ -1153,9 +1159,12 @@
       document.getElementById('saveProfileBtn').addEventListener('click', doSaveCustomProfile);
       document.getElementById('applyProfileBtn').addEventListener('click', doApplyCustomProfile);
 
-      // Basic Buttons
+      // Generate & Reset
       document.getElementById('newClientBtn').addEventListener('click', doGenerateNewClient);
       document.getElementById('resetTradesBtn').addEventListener('click', doResetTrades);
+
+      // Rebalance
+      document.getElementById('rebalanceBtn').addEventListener('click', doRebalance);
 
       // Initialize
       onRiskChange();
