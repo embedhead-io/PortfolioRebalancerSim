@@ -4,9 +4,6 @@
   <meta charset="UTF-8"/>
   <title>Portfolio Manager Simulator – Final Fixes</title>
   <style>
-    /*********************************************************
-     * LIGHT vs. DARK theme
-     *********************************************************/
     :root {
       --bg-body: #f8f9fa;
       --bg-container: #fff;
@@ -25,7 +22,6 @@
       --proposed-col-border: #66afff;
       --editable-field-border: #888;
     }
-
     body {
       margin: 0;
       font-family: 'Helvetica Neue', Arial, sans-serif;
@@ -34,7 +30,6 @@
       color: var(--text-color);
       transition: background 0.3s, color 0.3s;
     }
-
     .container {
       max-width: 1200px;
       margin: 1rem auto;
@@ -44,7 +39,6 @@
       box-shadow: 0 0 10px rgba(0,0,0,0.05);
       transition: background 0.3s, color 0.3s;
     }
-
     h1, h2 {
       margin-top: 0;
       margin-bottom: 0.75rem;
@@ -134,7 +128,7 @@
     /* Table & expansions */
     table {
       width: 100%;
-      table-layout: fixed; /* Enforce consistent column widths */
+      table-layout: fixed; /* keep columns aligned */
       border-collapse: collapse;
       margin: 0.5rem 0;
       transition: background 0.3s, color 0.3s;
@@ -142,12 +136,15 @@
     thead th {
       background: var(--header-footer-bg);
     }
-    tfoot td {
-      background: var(--header-footer-bg);
-      font-weight: bold;
+    th, td {
+      padding: 0.4rem;
+      border-bottom: 1px solid #eee;
+      vertical-align: middle;
+      text-align: right;  
+      overflow: hidden;  
+      white-space: nowrap;
     }
-
-    /* Fixed widths for each column to prevent shifting */
+    /* Force consistent column widths */
     thead th:nth-child(1)  { width: 14%; text-align: left; }
     thead th:nth-child(2)  { width: 8%; }
     thead th:nth-child(3)  { width: 8%; }
@@ -160,27 +157,15 @@
     thead th:nth-child(10) { width: 8%; }
     thead th:nth-child(11) { width: 8%; }
 
-    th, td {
-      padding: 0.4rem;
-      border-bottom: 1px solid #eee;
-      vertical-align: middle;
-      text-align: right;  /* numeric columns right-aligned by default */
-      overflow: hidden;   /* prevent overflow in fixed layout */
-      white-space: nowrap;
-    }
-    /* Left-align only the first column (the asset name) */
     th:first-child, td:first-child {
-      text-align: left;
+      text-align: left; /* only the first column is left-aligned */
     }
 
-    /* Asset column => bold text, slightly darker BG. */
     .asset-col {
       background: var(--asset-col-bg);
       font-weight: bold;
       transition: background 0.3s;
     }
-
-    /* Proposed => dotted border, clickable. */
     .proposed-col {
       border: 1px dotted var(--proposed-col-border);
       background: #fafafa;
@@ -209,14 +194,11 @@
       font-weight: bold; 
     }
 
-    /* Expand toggles, hidden classes, indentation for sub-levels */
     .expand-toggle {
       cursor: pointer; 
       color: #007bff; 
       margin-right: 0.5rem;
     }
-    .hidden { display: none; }
-
     .class-row td { 
       padding-left: 2em; 
     }
@@ -268,7 +250,6 @@
       transition: color 0.3s;
       color: var(--text-color);
     }
-
     .success { 
       color: green; 
       font-weight: bold; 
@@ -339,10 +320,8 @@
           <th>Delta (%)</th>
         </tr>
       </thead>
+      <!-- All rows, including TOTAL, go into the same <tbody> -->
       <tbody id="portfolioRows"></tbody>
-      <tfoot>
-        <tr id="totalRow"></tr>
-      </tfoot>
     </table>
 
     <div class="charts-container">
@@ -365,13 +344,13 @@
 </div>
 
 <div class="footer">
-  &copy; Final Example – Resolved Proposed Edits, Risk Tolerance, Dark Mode
+  &copy; Example – Final Fix
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 /***************************************************************
- * 1) Data Model
+ * Data Model
  ***************************************************************/
 let root = {
   name: "ROOT",
@@ -389,7 +368,7 @@ let userStockPct=0.5, userBondPct=0.4, userCashPct=0.1; // default moderate
 let currentChart, targetChart, finalChart; // the 3 charts
 
 /***************************************************************
- * 2) Dark Mode Toggle
+ * Dark Mode Toggle
  ***************************************************************/
 const darkToggle= document.getElementById('darkModeToggle');
 darkToggle.addEventListener('click', () => {
@@ -397,7 +376,7 @@ darkToggle.addEventListener('click', () => {
 });
 
 /***************************************************************
- * 3) Generate Random Data
+ * Generate Random Data
  ***************************************************************/
 function generateRandomNestedData() {
   root.children = [];
@@ -430,10 +409,10 @@ function generateRandomNestedData() {
   bonds.children.push(makePosition("Corp Bond A"));
   bonds.children.push(makePosition("Gov Bond B"));
 
-  // For Cash, let's just store random currentDollar
+  // For Cash
   cash.currentDollar = roundTo100(3000 + Math.random()*2000);
 
-  // Add them to root
+  // Add them
   root.children.push(stocks, bonds, cash);
 }
 
@@ -455,11 +434,10 @@ function roundTo100(x) {
 }
 
 /***************************************************************
- * 4) Aggregation (bottom-up)
+ * Aggregation (bottom-up)
  ***************************************************************/
 function aggregateNode(node) {
   if(!node.children || node.children.length===0) {
-    // Leaf => position or single asset
     node.totalDollar = (node.currentDollar || 0) + (node.proposedDollar || 0);
     return;
   }
@@ -477,7 +455,6 @@ function aggregateNode(node) {
   node.totalDollar     = tot;
 }
 
-/** Then compute absolute% vs. root sums */
 function computePercentages(node, rootRef) {
   let rc   = (rootRef.currentDollar>0? rootRef.currentDollar:1);
   let rt   = (rootRef.targetDollar>0? rootRef.targetDollar:1);
@@ -494,21 +471,21 @@ function computePercentages(node, rootRef) {
 }
 
 /***************************************************************
- * 5) Table Rendering
+ * Table Rendering
  ***************************************************************/
 function renderTable() {
   const tb = document.getElementById('portfolioRows');
   tb.innerHTML = "";
 
+  // Render each top-level asset
   root.children.forEach(asset => renderNode(asset, 0));
 
-  buildTotalRow();
+  // Then our total row last
+  buildTotalRow();  
 }
 
 function renderNode(node, level) {
   const tr = document.createElement('tr');
-
-  // Indentation classes (optional)
   if(node.isClass)         tr.classList.add('class-row');
   else if(node.isPosition) tr.classList.add('position-row');
   else if(node.isAsset)    tr.classList.add('asset-row');
@@ -519,7 +496,7 @@ function renderNode(node, level) {
     tdName.className = 'asset-col';
   }
 
-  // Expand toggler
+  // Expand toggler if children
   if(node.children && node.children.length>0) {
     let toggler = document.createElement('span');
     toggler.className = 'expand-toggle';
@@ -547,7 +524,6 @@ function renderNode(node, level) {
   let tdProp = document.createElement('td');
   tdProp.className = 'proposed-col';
   let pd = node.proposedDollar || 0;
-  // color code if positive/negative
   if(Math.abs(pd) > 0.01) {
     if(pd > 0) tdProp.classList.add('proposed-positive');
     else       tdProp.classList.add('proposed-negative');
@@ -561,7 +537,7 @@ function renderNode(node, level) {
   tdTot.textContent = formatMoney(node.totalDollar||0);
   tr.appendChild(tdTot);
 
-  // Delta($) = (target - total)
+  // Delta($) = target - total
   let dval = (node.targetDollar||0) - (node.totalDollar||0);
   let tdDelta = document.createElement('td');
   tdDelta.textContent = withSignMoney(dval);
@@ -605,18 +581,18 @@ function renderNode(node, level) {
 
   document.getElementById('portfolioRows').appendChild(tr);
 
-  // Render children if expanded
+  // If expanded, render children
   if(node.expanded && node.children && node.children.length>0) {
     node.children.forEach(ch => renderNode(ch, level+1));
   }
 }
 
-// Build total row
+/***************************************************************
+ * The "TOTAL PORTFOLIO" row => appended last in same <tbody>
+ ***************************************************************/
 function buildTotalRow() {
-  const tf = document.getElementById('totalRow');
-  tf.innerHTML = "";
-
-  // Gather root-level data
+  const tb = document.getElementById('portfolioRows');
+  
   let cDollar = root.currentDollar   || 0;
   let tDollar = root.targetDollar    || 0;
   let pDollar = root.proposedDollar  || 0;
@@ -684,11 +660,12 @@ function buildTotalRow() {
   colorDeltaCell(tdDeltaPct, dpct);
   tr.appendChild(tdDeltaPct);
 
-  tf.appendChild(tr);
+  // Append to the same <tbody>
+  tb.appendChild(tr);
 }
 
 /***************************************************************
- * 6) Proposed Cell Editing => Single-click
+ * Proposed Cell Editing => Single-click
  ***************************************************************/
 function editProposedCell(cell, node, mode) {
   let oldVal = cell.textContent;
@@ -726,7 +703,7 @@ function finishProposedEdit(cell, node, rawVal, mode) {
 }
 
 /***************************************************************
- * 7) Recalc & Rerender
+ * Recalc & Rerender
  ***************************************************************/
 function renderAll() {
   aggregateNode(root);
@@ -736,7 +713,7 @@ function renderAll() {
 }
 
 /***************************************************************
- * 8) Distributing Risk (Top-Down)
+ * Distributing Risk (Top-Down)
  ***************************************************************/
 function applyRiskAllocation() {
   let tVal = totalPortfolioValue;
@@ -772,7 +749,7 @@ function distributeTargets(node) {
 }
 
 /***************************************************************
- * 9) SHIFTING RISK on <select>
+ * SHIFTING RISK on <select>
  ***************************************************************/
 function onRiskChange() {
   let val = document.getElementById('riskSelect').value;
@@ -781,7 +758,6 @@ function onRiskChange() {
   } else if(val==="aggressive") {
     userStockPct=0.7; userBondPct=0.2; userCashPct=0.1;
   } else {
-    // moderate
     userStockPct=0.5; userBondPct=0.4; userCashPct=0.1;
   }
   document.getElementById('targetStocks').textContent = (userStockPct*100).toFixed(0);
@@ -793,10 +769,9 @@ function onRiskChange() {
 }
 
 /***************************************************************
- * 10) Generating & Scaling to Match Portfolio Value
+ * Generating & Scaling to Match Portfolio Value
  ***************************************************************/
 function doGenerateNewClient() {
-  // random name & portfolio
   const names = ["John Smith","Jane Doe","Alex Johnson","Maria Garcia","Lee Wong"];
   let n = names[Math.floor(Math.random()* names.length)];
   clientName = n;
@@ -807,10 +782,10 @@ function doGenerateNewClient() {
   totalPortfolioValue = val;
   document.getElementById('clientValue').textContent = formatMoney(val);
 
-  // build random nested
+  // random nested
   generateRandomNestedData();
 
-  // Scale entire portfolio so sum of current = totalPortfolioValue
+  // scale sum of current = totalPortfolioValue
   aggregateNode(root);
   let sumCur = root.currentDollar || 1;
   let ratio  = totalPortfolioValue / sumCur;
@@ -844,7 +819,7 @@ function doResetTrades() {
 }
 
 /***************************************************************
- * 11) Chart init & update
+ * Chart init & update
  ***************************************************************/
 function initCharts() {
   currentChart= new Chart(document.getElementById('currentChart'), {
@@ -907,28 +882,22 @@ function updateCharts() {
     tarVals.push(ch.targetDollar||0);
     totVals.push(ch.totalDollar||0);
   });
-  // update current chart
   currentChart.data.labels = labels;
   currentChart.data.datasets[0].data = curVals;
   currentChart.update();
 
-  // update target chart
   targetChart.data.labels = labels;
   targetChart.data.datasets[0].data = tarVals;
   targetChart.update();
 
-  // update final chart
   finalChart.data.labels = labels;
   finalChart.data.datasets[0].data = totVals;
   finalChart.update();
 }
 
 /***************************************************************
- * 12) Utility
+ * Utility
  ***************************************************************/
-/** 
- * Formats a number as US-style currency, e.g. 1902 => "1,902.00"
- */
 function formatMoney(x){
   return new Intl.NumberFormat('en-US', {
     style: 'decimal',
@@ -937,10 +906,6 @@ function formatMoney(x){
   }).format(x);
 }
 
-/**
- * Delta sign: negative => red, positive => green, zero => black
- * (We invert the classes from the earlier code so that negative is red.)
- */
 function colorDeltaCell(td, val){
   td.classList.remove('delta-positive','delta-negative');
   let r = parseFloat(val.toFixed(2));
@@ -975,12 +940,11 @@ function withSignPct(value){
 }
 
 /***************************************************************
- * 13) Enable Editing of Portfolio Value (clientValue)
+ * Enable Editing of Portfolio Value (clientValue)
  ***************************************************************/
 function enablePortfolioValueEdit() {
   const valElem = document.getElementById('clientValue');
   valElem.addEventListener('click', function onClick() {
-    // turn the span into an input
     const oldVal = valElem.textContent.replace(/,/g,'').replace(/[^\d.\-+]/g,'');
     valElem.innerHTML = '';
 
@@ -992,9 +956,7 @@ function enablePortfolioValueEdit() {
       const parsed = parseFloat(input.value.replace(/,/g,'')) || 0;
       totalPortfolioValue = parsed;
       valElem.innerHTML = formatMoney(parsed);
-
-      // Re-apply risk & re-render
-      onRiskChange();
+      onRiskChange(); // re-apply risk
     };
 
     input.onkeydown = function(e) {
@@ -1010,7 +972,7 @@ function enablePortfolioValueEdit() {
 }
 
 /***************************************************************
- * 14) Startup
+ * Startup
  ***************************************************************/
 window.addEventListener('DOMContentLoaded', () => {
   initCharts();
@@ -1020,7 +982,7 @@ window.addEventListener('DOMContentLoaded', () => {
   document.getElementById('newClientBtn').addEventListener('click', doGenerateNewClient);
   document.getElementById('resetTradesBtn').addEventListener('click', doResetTrades);
 
-  // Default
+  // Start
   onRiskChange();
   doGenerateNewClient();
 });
