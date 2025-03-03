@@ -994,9 +994,16 @@ window.addEventListener('DOMContentLoaded', () => {
   document.getElementById('newClientBtn').addEventListener('click', doGenerateNewClient);
   document.getElementById('resetTradesBtn').addEventListener('click', doResetTrades);
   
-  // IMPORTANT: Generate a new client first, then apply risk so that the table loads with data.
+  // // IMPORTANT: Generate a new client first, then apply risk so that the table loads with data.
+  // doGenerateNewClient();
+  // onRiskChange();
+
+  // IMPORTANT: For initial load, generate a new client and apply risk allocation
   doGenerateNewClient();
   onRiskChange();
+
+  // For testing purposes, you can uncomment the following line to see the table with a fixed dataset
+  renderAll();
 });
 </script>
 </body>
