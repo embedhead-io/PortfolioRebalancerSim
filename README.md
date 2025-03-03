@@ -1,6 +1,3 @@
-Below is a sample **README.md** file describing the **"Phase 1 – Final"** version of the Portfolio Manager Simulator. It provides an overview of the project's purpose, functionality, requirements, and setup instructions, serving as a convenient reference for both developers and end-users.
-
-```md
 # Portfolio Manager Simulator – Phase 1 Final
 
 **Phase 1 – Final** is the stabilized, production-ready base version of the Portfolio Manager Simulator. It features:
@@ -138,9 +135,3 @@ There are no additional server-side requirements—this app can be served locall
 ## License
 
 The **Portfolio Manager Simulator** (Phase 1 – Final) is available under an MIT-style license by default. Adjust or replace this section with your actual license information.
-
---- 
-
-### Going Forward
-
-**Phase 1 – Final** serves as our stable baseline. Future phases will include more advanced features, such as real-time data feeds, import/export, multi-asset expansions, and so on. If you have questions or ideas, please open an issue or create a pull request!
