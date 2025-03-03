@@ -138,18 +138,19 @@
       overflow: hidden;  
       white-space: nowrap;
     }
-    /* Force consistent column widths for all 11 columns */
-    thead th:nth-child(1)  { width: 14%; text-align: left; }
-    thead th:nth-child(2)  { width: 8%; }
-    thead th:nth-child(3)  { width: 8%; }
-    thead th:nth-child(4)  { width: 8%; }
-    thead th:nth-child(5)  { width: 8%; }
-    thead th:nth-child(6)  { width: 8%; }
-    thead th:nth-child(7)  { width: 8%; }
-    thead th:nth-child(8)  { width: 8%; }
-    thead th:nth-child(9)  { width: 8%; }
-    thead th:nth-child(10) { width: 8%; }
-    thead th:nth-child(11) { width: 8%; }
+
+    /* Force dynamic column widths for all 11 columns so they adjust to fit cell contents */
+    thead th:nth-child(1)  { width: auto; }
+    thead th:nth-child(2)  { width: auto; }
+    thead th:nth-child(3)  { width: auto; }
+    thead th:nth-child(4)  { width: auto; }
+    thead th:nth-child(5)  { width: auto; }
+    thead th:nth-child(6)  { width: auto; }
+    thead th:nth-child(7)  { width: auto; }
+    thead th:nth-child(8)  { width: auto; }
+    thead th:nth-child(9)  { width: auto; }
+    thead th:nth-child(10) { width: auto; }
+    thead th:nth-child(11) { width: auto; }
     th:first-child, td:first-child {
       text-align: left; /* only the first column is left-aligned */
     }
