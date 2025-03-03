@@ -375,9 +375,10 @@ let clientName = "";
 let totalPortfolioValue = 0;
 let originalPortfolioValue = 0;
 
-let userStockPct = 0.5, userBondPct = 0.4, userCashPct = 0.1; // default moderate
+// Default risk: moderate
+let userStockPct = 0.5, userBondPct = 0.4, userCashPct = 0.1;
 
-let currentChart, targetChart, finalChart; // the 3 charts
+let currentChart, targetChart, finalChart;
 
 /***************************************************************
  * Dark Mode Toggle
@@ -389,7 +390,6 @@ darkToggle.addEventListener('click', () => {
 
 /***************************************************************
  * Generate Random Data
- * - Bug Fix: Ensure cash.targetDollar is initialized to avoid NaN
  ***************************************************************/
 function generateRandomNestedData() {
   root.children = [];
@@ -422,9 +422,9 @@ function generateRandomNestedData() {
   bonds.children.push(makePosition("Corp Bond A"));
   bonds.children.push(makePosition("Gov Bond B"));
 
-  // Cash => ensure both currentDollar and targetDollar are defined
+  // For Cash
   cash.currentDollar = roundTo100(3000 + Math.random() * 2000);
-  cash.targetDollar  = 0; // Prevent NaN in scale step
+  cash.targetDollar  = 0; 
   root.children.push(stocks, bonds, cash);
 }
 
@@ -441,6 +441,7 @@ function makePosition(ticker) {
     totalDollar: 0
   };
 }
+
 function roundTo100(x) {
   return Math.round(x / 100) * 100;
 }
@@ -469,18 +470,17 @@ function aggregateNode(node) {
 
 /***************************************************************
  * Compute Percentages
- * - Proposed(%) is measured against rootRef.currentDollar
+ * IMPORTANT: Use rootRef.targetDollar as the universal denominator
+ * This guarantees if Target($)=Total($), then Target(%)=Total(%).
  ***************************************************************/
 function computePercentages(node, rootRef) {
-  let rc   = (rootRef.currentDollar  > 0 ? rootRef.currentDollar  : 1);
-  let rt   = (rootRef.targetDollar   > 0 ? rootRef.targetDollar   : 1);
-  let rtot = (rootRef.totalDollar    > 0 ? rootRef.totalDollar    : 1);
+  // Single universal denominator:
+  let denom = (rootRef.targetDollar > 0 ? rootRef.targetDollar : 1);
 
-  node.currentPct   = (node.currentDollar   / rc) * 100;
-  node.targetPct    = (node.targetDollar    / rt) * 100;
-  node.totalPct     = (node.totalDollar     / rtot) * 100;
-  // Proposed is intentionally using 'rc' for consistency with how we edit Proposed(%)
-  node.proposedPct  = (node.proposedDollar / rc) * 100;
+  node.currentPct   = (node.currentDollar   / denom) * 100;
+  node.targetPct    = (node.targetDollar    / denom) * 100;
+  node.totalPct     = (node.totalDollar     / denom) * 100;
+  node.proposedPct  = (node.proposedDollar / denom) * 100;
 
   if (node.children && node.children.length > 0) {
     node.children.forEach(ch => computePercentages(ch, rootRef));
@@ -494,10 +494,8 @@ function renderTable() {
   const tb = document.getElementById('portfolioRows');
   tb.innerHTML = "";
 
-  // Render each top-level asset
   root.children.forEach(asset => renderNode(asset, 0));
 
-  // Then our total row last
   buildTotalRow();  
 }
 
@@ -513,7 +511,6 @@ function renderNode(node, level) {
     tdName.className = 'asset-col';
   }
 
-  // Expand toggler if children
   if (node.children && node.children.length > 0) {
     let toggler = document.createElement('span');
     toggler.className = 'expand-toggle';
@@ -537,7 +534,7 @@ function renderNode(node, level) {
   tdTar.textContent = formatMoney(node.targetDollar || 0);
   tr.appendChild(tdTar);
 
-  // Proposed($) => single-click editable
+  // Proposed($)
   let tdProp = document.createElement('td');
   tdProp.className = 'proposed-col';
   let pd = node.proposedDollar || 0;
@@ -554,7 +551,7 @@ function renderNode(node, level) {
   tdTot.textContent = formatMoney(node.totalDollar || 0);
   tr.appendChild(tdTot);
 
-  // Delta($) = (target - total)
+  // Delta($)
   let dval = (node.targetDollar || 0) - (node.totalDollar || 0);
   let tdDelta = document.createElement('td');
   tdDelta.textContent = withSignMoney(dval);
@@ -598,14 +595,13 @@ function renderNode(node, level) {
 
   document.getElementById('portfolioRows').appendChild(tr);
 
-  // If expanded, render children
   if (node.expanded && node.children && node.children.length > 0) {
     node.children.forEach(ch => renderNode(ch, level + 1));
   }
 }
 
 /***************************************************************
- * The "TOTAL PORTFOLIO" row => appended last in same <tbody>
+ * Build the TOTAL row
  ***************************************************************/
 function buildTotalRow() {
   const tb = document.getElementById('portfolioRows');
@@ -616,63 +612,53 @@ function buildTotalRow() {
   let totDollar = root.totalDollar     || 0;
 
   let dval = tDollar - totDollar; 
+  // After fix, the same denominator = root.targetDollar
   let dpct = (root.targetPct || 0) - (root.totalPct || 0);
 
   let tr = document.createElement('tr');
-  tr.classList.add('total-row');  // Apply special styling
+  tr.classList.add('total-row');
 
-  // 1) Label
   let tdLabel = document.createElement('td');
   tdLabel.textContent = "Total Portfolio";
   tr.appendChild(tdLabel);
 
-  // 2) Current($)
   let tdCurr = document.createElement('td');
   tdCurr.textContent = formatMoney(cDollar);
   tr.appendChild(tdCurr);
 
-  // 3) Target($)
   let tdTarg = document.createElement('td');
   tdTarg.textContent = formatMoney(tDollar);
   tr.appendChild(tdTarg);
 
-  // 4) Proposed($)
   let tdProp = document.createElement('td');
   tdProp.textContent = formatMoney(pDollar);
   tr.appendChild(tdProp);
 
-  // 5) Total($)
   let tdTot = document.createElement('td');
   tdTot.textContent = formatMoney(totDollar);
   tr.appendChild(tdTot);
 
-  // 6) Delta($)
   let tdDelta = document.createElement('td');
   tdDelta.textContent = withSignMoney(dval);
   colorDeltaCell(tdDelta, dval);
   tr.appendChild(tdDelta);
 
-  // 7) Current(%)
   let tdCurrPct = document.createElement('td');
   tdCurrPct.textContent = (root.currentPct || 0).toFixed(2) + "%";
   tr.appendChild(tdCurrPct);
 
-  // 8) Target(%)
   let tdTargPct = document.createElement('td');
   tdTargPct.textContent = (root.targetPct || 0).toFixed(2) + "%";
   tr.appendChild(tdTargPct);
 
-  // 9) Proposed(%)
   let tdPropPct = document.createElement('td');
   tdPropPct.textContent = (root.proposedPct || 0).toFixed(2) + "%";
   tr.appendChild(tdPropPct);
 
-  // 10) Total(%)
   let tdTotPct = document.createElement('td');
   tdTotPct.textContent = (root.totalPct || 0).toFixed(2) + "%";
   tr.appendChild(tdTotPct);
 
-  // 11) Delta(%)
   let tdDeltaPct = document.createElement('td');
   tdDeltaPct.textContent = withSignPct(dpct);
   colorDeltaCell(tdDeltaPct, dpct);
@@ -682,13 +668,11 @@ function buildTotalRow() {
 }
 
 /***************************************************************
- * Proposed Cell Editing => Single-click
- * - Maintains consistency by letting Proposed(%) be a fraction
- *   of the entire root’s currentDollar
+ * Proposed Cell Editing
+ * Note that Proposed(%) is now a fraction of root.targetDollar
  ***************************************************************/
 function editProposedCell(cell, node, mode) {
-  let oldVal = cell.textContent;
-  oldVal = oldVal.replace(/,/g,'').replace(/[^\d.\-+]/g,'');
+  let oldVal = cell.textContent.replace(/,/g, '').replace(/[^\d.\-+]/g, '');
   cell.onclick = null;
   cell.innerHTML = '';
 
@@ -709,13 +693,13 @@ function editProposedCell(cell, node, mode) {
 }
 
 function finishProposedEdit(cell, node, rawVal, mode) {
-  rawVal = rawVal.replace(/,/g,'');
+  rawVal = rawVal.replace(/,/g, '');
   let val = parseFloat(rawVal) || 0;
 
-  // If user is editing Proposed(%), we interpret it as a fraction of root.currentDollar
   if (mode === 'percent') {
-    let rc = (root.currentDollar > 0 ? root.currentDollar : 1);
-    node.proposedDollar = (val / 100) * rc;
+    // Use targetDollar for Proposed(%)
+    let rt = (root.targetDollar > 0 ? root.targetDollar : 1);
+    node.proposedDollar = (val / 100) * rt;
   } else {
     node.proposedDollar = val;
   }
@@ -802,10 +786,7 @@ function doGenerateNewClient() {
   totalPortfolioValue = val;
   document.getElementById('clientValue').textContent = formatMoney(val);
 
-  // random nested
   generateRandomNestedData();
-
-  // scale sum of current = totalPortfolioValue
   aggregateNode(root);
   let sumCur = root.currentDollar || 1;
   let ratio  = totalPortfolioValue / sumCur;
@@ -930,7 +911,7 @@ function colorDeltaCell(td, val) {
   td.classList.remove('delta-positive', 'delta-negative');
   let r = parseFloat(val.toFixed(2));
   if (Math.abs(r) < 0.01) {
-    // zero => black (no extra class needed)
+    // zero => no special color
   } else if (r < 0) {
     td.classList.add('delta-negative');
   } else {
@@ -963,7 +944,7 @@ function withSignPct(value) {
 function enablePortfolioValueEdit() {
   const valElem = document.getElementById('clientValue');
   valElem.addEventListener('click', function onClick() {
-    const oldVal = valElem.textContent.replace(/,/g,'').replace(/[^\d.\-+]/g,'');
+    const oldVal = valElem.textContent.replace(/,/g, '').replace(/[^\d.\-+]/g, '');
     valElem.innerHTML = '';
 
     const input = document.createElement('input');
@@ -971,7 +952,7 @@ function enablePortfolioValueEdit() {
     input.value = oldVal || '0';
 
     input.onblur = function() {
-      const parsed = parseFloat(input.value.replace(/,/g,'')) || 0;
+      const parsed = parseFloat(input.value.replace(/,/g, '')) || 0;
       totalPortfolioValue = parsed;
       valElem.innerHTML = formatMoney(parsed);
       onRiskChange(); // re-apply risk
