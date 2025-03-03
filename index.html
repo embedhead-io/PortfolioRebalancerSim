@@ -583,8 +583,7 @@ function renderNode(node, level) {
     else     tdPropPct.classList.add('proposed-negative');
   }
   tdPropPct.textContent = pp.toFixed(2)+"%";
-  // Single-click => edit in % mode? (Optional) 
-  // We can do the same approach, or we can skip if you only want $ editing.
+  // Single-click => edit in % mode? (Optional)
   tdPropPct.onclick = ()=> editProposedCell(tdPropPct, node, true); 
   tr.appendChild(tdPropPct);
 
@@ -675,10 +674,6 @@ function buildTotalRow() {
 /********************************************************************
  * 7) Proposed Cell Editing => 2-Way Updating
  ********************************************************************/
-/**
- * If 'isPercent' is true, user is editing proposed in % terms.
- * Otherwise, in $ terms.
- */
 function editProposedCell(cell, node, isPercent=false) {
   let oldVal = cell.textContent.replace(/,/g,'').replace(/[^\d.\-+]/g,'');
   cell.onclick = null;
@@ -715,13 +710,6 @@ function finishProposedEdit(cell, node, rawVal, isPercent) {
 /********************************************************************
  * 8) KEY LOGIC: applyProposedValue => handle up/down updates
  ********************************************************************/
-/**
- * This function sets node.proposedDollar to 'val'.
- * Then:
- *  1) If node has children => distribute that total among children
- *     proportionally to their currentDollar.
- *  2) Bubble up => parent's proposed = sum of its children, etc.
- */
 function applyProposedValue(node, val) {
   // 1) Set this node's proposed
   node.proposedDollar = val;
@@ -731,36 +719,25 @@ function applyProposedValue(node, val) {
     distributeProposedDown(node);
   }
 
-  // 3) Then bubble up to ancestors
+  // 3) Then bubble up
   bubbleUpProposed(node);
 }
 
-/**
- * Distribute node.proposedDollar to children according to each child's
- * share of node.currentDollar. For example, if node has 2 children with
- * currentDollar of 3000 and 1000 => total 4000 => that ratio is 75/25.
- */
 function distributeProposedDown(node) {
   let sumCurrent = node.children.reduce((acc, ch) => acc+(ch.currentDollar||0), 0);
-  if(sumCurrent<1) sumCurrent=1; // avoid division by zero
-
+  if(sumCurrent<1) sumCurrent=1; 
   node.children.forEach(ch => {
     let ratio = (ch.currentDollar||0)/ sumCurrent;
     ch.proposedDollar = ratio * node.proposedDollar;
-    // and if that child has children, recursively push down
     if(ch.children && ch.children.length>0) {
       distributeProposedDown(ch);
     }
   });
 }
 
-/**
- * Bubble up: if the node has a parent => parent's proposedDollar is
- * simply the sum of parent's children. Then keep going up.
- */
 function bubbleUpProposed(node) {
   let p = node.parent;
-  if(!p) return; // no parent => at root
+  if(!p) return; 
   if(!p.children || p.children.length===0) return;
 
   let sum=0;
@@ -769,7 +746,7 @@ function bubbleUpProposed(node) {
   });
   p.proposedDollar = sum;
 
-  // Then continue up
+  // continue up
   bubbleUpProposed(p);
 }
 
@@ -871,7 +848,10 @@ function doGenerateNewClient() {
   originalData = JSON.parse(JSON.stringify(root));
   originalPortfolioValue = val;
 
-  applyRiskAllocation();
+  // We will NOT call onRiskChange yet. We'll wait until after data is created.
+  // Then the user can pick a risk or keep the default. 
+  // But let's do a first renderAll so we have some data on screen.
+
   renderAll();
 }
 
@@ -1060,9 +1040,8 @@ window.addEventListener('DOMContentLoaded', () => {
   document.getElementById('newClientBtn').addEventListener('click', doGenerateNewClient);
   document.getElementById('resetTradesBtn').addEventListener('click', doResetTrades);
 
-  // Start
+  // CHANGED: We FIRST create data, THEN user can pick risk if they want
   doGenerateNewClient();
-  onRiskChange();
 });
 </script>
 </body>
