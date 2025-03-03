@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
-  <title>Portfolio Manager Simulator – Phase 1 Stabilization (Reordered Columns)</title>
+  <title>Portfolio Manager Simulator – Phase 1 (Reordered Columns, Auto-Expanded)</title>
   <style>
     :root {
       --bg-body: #f8f9fa;
@@ -150,8 +150,7 @@
       overflow: hidden;  
       white-space: nowrap;
     }
-    /* Force consistent column widths */
-    /* 11 columns total:
+    /* Force consistent column widths:
        1: Name
        2: Current($)
        3: Target($)
@@ -285,7 +284,7 @@
       font-weight: bold; 
     }
     .error   { 
-      color: red;   
+      color: red; 
       font-weight: bold; 
     }
   </style>
@@ -296,7 +295,7 @@
 <div class="dark-mode-toggle" id="darkModeToggle"></div>
 
 <div class="container">
-  <h1>Portfolio Manager Simulator – Phase 1 (Reordered Columns)</h1>
+  <h1>Portfolio Manager Simulator – Phase 1 (Auto-Expanded)</h1>
 
   <!-- Client Profile -->
   <div class="section" id="client-profile">
@@ -395,7 +394,7 @@
 </div>
 
 <div class="footer">
-  &copy; Example – Reordered Columns
+  &copy; Example – Auto-Expanded
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -428,20 +427,20 @@ darkToggle.addEventListener('click', () => {
 });
 
 /***************************************************************
- * Generate Random Data
+ * Generate Random Data (All expanded by default)
  ***************************************************************/
 function generateRandomNestedData() {
   root.children = [];
 
-  let stocks = { name: "Stocks", isAsset: true, expanded: false, children: [] };
-  let bonds  = { name: "Bonds",  isAsset: true, expanded: false, children: [] };
-  let cash   = { name: "Cash",   isAsset: true, expanded: false, children: [] };
+  let stocks = { name: "Stocks", isAsset: true, expanded: true, children: [] };
+  let bonds  = { name: "Bonds",  isAsset: true, expanded: true, children: [] };
+  let cash   = { name: "Cash",   isAsset: true, expanded: true, children: [] };
 
-  // Stocks => 2 classes
+  // Stocks => 2 classes, expanded
   stocks.children.push({
     name: "Large Cap", 
     isClass: true, 
-    expanded: false, 
+    expanded: true, 
     children: [
       makePosition("AAPL"), 
       makePosition("MSFT")
@@ -450,30 +449,33 @@ function generateRandomNestedData() {
   stocks.children.push({
     name: "Small Cap", 
     isClass: true, 
-    expanded: false, 
+    expanded: true, 
     children: [
       makePosition("RGEN"), 
       makePosition("FIZZ")
     ]
   });
 
-  // Bonds => direct positions
+  // Bonds => direct positions, no children of children, but expanded
   bonds.children.push(makePosition("Corp Bond A"));
   bonds.children.push(makePosition("Gov Bond B"));
 
   // For Cash
   cash.currentDollar = roundTo100(3000 + Math.random() * 2000);
   cash.targetDollar  = 0; 
+
   root.children.push(stocks, bonds, cash);
 }
 
 function makePosition(ticker) {
   let cur = 3000 + Math.random() * 9000;
   let tar = cur + (Math.random() - 0.5) * 2000;
+  // For positions with no children, expanded doesn't matter,
+  // but we can still set it to true for consistency.
   return {
     name: ticker,
     isPosition: true,
-    expanded: false,
+    expanded: true, 
     currentDollar: roundTo100(cur),
     targetDollar:  roundTo100(tar),
     proposedDollar: 0,
@@ -525,9 +527,6 @@ function computePercentages(node, rootRef) {
 
 /***************************************************************
  * Table Rendering
- * Reordered columns: 
- * - For $: Current, Target, Delta, Proposed, Total
- * - For %: Current, Target, Delta, Proposed, Total
  ***************************************************************/
 function renderTable() {
   const tb = document.getElementById('portfolioRows');
@@ -639,10 +638,6 @@ function renderNode(node, level) {
   }
 }
 
-/***************************************************************
- * The "TOTAL PORTFOLIO" row => appended last
- * Following the same new column order
- ***************************************************************/
 function buildTotalRow() {
   const tb = document.getElementById('portfolioRows');
 
@@ -712,12 +707,6 @@ function buildTotalRow() {
   tr.appendChild(tdPropPct);
 
   // 11) Total(%)
-  // We only have 10 columns in the new order? Actually, we have 11 columns:
-  // 1 for name, 5 for dollar columns, 5 for percent columns = 11 total.
-  // So we do need an 11th column for "Total(%)".
-  // But the instructions said: "Current, Target, Delta, Proposed, Total" for both $ and % => that is 5 columns each, plus the first column (name).
-  // => 1 + 5 + 5 = 11 columns.
-
   let tdTotPct = document.createElement('td');
   tdTotPct.textContent = (root.totalPct || 0).toFixed(2) + "%";
   tr.appendChild(tdTotPct);
@@ -727,7 +716,6 @@ function buildTotalRow() {
 
 /***************************************************************
  * Proposed Cell Editing => Single-click
- * Phase 1: Validate & clamp extreme values
  ***************************************************************/
 function editProposedCell(cell, node, mode) {
   let oldVal = cell.textContent.replace(/,/g, '').replace(/[^\d.\-+]/g, '');
@@ -1041,7 +1029,6 @@ function withSignPct(value) {
 
 /***************************************************************
  * Enable Editing of Portfolio Value (clientValue)
- * Phase 1: clamp if < 1
  ***************************************************************/
 function enablePortfolioValueEdit() {
   const valElem = document.getElementById('clientValue');
