@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
-  <title>Portfolio Manager Simulator – Final Fixes</title>
+  <title>Portfolio Manager Simulator – Phase 1 Stabilization</title>
   <style>
     :root {
       --bg-body: #f8f9fa;
@@ -31,7 +31,6 @@
       transition: background 0.3s, color 0.3s;
     }
     .container {
-      max-width: auto;
       width: 90%;
       margin: 1rem auto;
       padding: 1.5rem;
@@ -105,6 +104,12 @@
     #riskSelect { 
       margin-left: 0.5rem; 
     }
+    /* The numeric input for customizing Cash % */
+    #cashTargetInput {
+      width: 50px;
+      text-align: right;
+      margin-left: 0.5rem;
+    }
 
     /* Editable Portfolio Value */
     .editable-field {
@@ -159,7 +164,7 @@
     thead th:nth-child(11) { width: 8%; }
 
     th:first-child, td:first-child {
-      text-align: left; /* only the first column is left-aligned */
+      text-align: left; 
     }
 
     .asset-col {
@@ -213,13 +218,13 @@
 
     /* Match header row */
     .total-row {
-      background: var(--header-footer-bg);  /* Same as header */
+      background: var(--header-footer-bg); 
       font-weight: bold; 
       text-align: right;
     }
     .total-row td {
-      border-top: 2px solid #ccc; /* Adds a clear top border to separate it */
-      padding: 8px; /* Slightly more padding for a balanced look */
+      border-top: 2px solid #ccc;
+      padding: 8px;
     }
 
     /* 3 smaller charts side by side */
@@ -274,15 +279,18 @@
 </head>
 <body>
 
+<!-- Dark Mode Toggle -->
 <div class="dark-mode-toggle" id="darkModeToggle"></div>
 
 <div class="container">
-  <h1>Portfolio Manager Simulator – Final Fixes</h1>
+  <h1>Portfolio Manager Simulator – Phase 1 Stabilization</h1>
 
   <!-- Client Profile -->
   <div class="section" id="client-profile">
     <div class="profile-info">
       <p><strong>Name:</strong> <span id="clientName">--</span></p>
+
+      <!-- RISK SELECT -->
       <p>
         <strong>Risk Tolerance:</strong>
         <select id="riskSelect">
@@ -291,16 +299,33 @@
           <option value="aggressive">Aggressive</option>
         </select>
       </p>
+
+      <!-- PORTFOLIO VALUE -->
       <p>
         <strong>Portfolio Value:</strong>
         $<span id="clientValue" class="editable-field">0</span>
       </p>
+
+      <!-- STOCK/BOND/CASH ALLOCATION DISPLAY -->
       <p>
         <strong>Target Allocation:</strong>
         <span id="targetStocks">--</span>% Stocks, 
         <span id="targetBonds">--</span>% Bonds, 
         <span id="targetCash">--</span>% Cash
       </p>
+
+      <!-- NEW CASH TARGET INPUT -->
+      <p>
+        <strong>Cash Target (%):</strong>
+        <input 
+          type="number" 
+          id="cashTargetInput" 
+          value="10" 
+          min="0" 
+          max="100" 
+          step="1"/>
+      </p>
+
       <div class="profile-actions">
         <button class="btn" id="newClientBtn">Generate New Client</button>
       </div>
@@ -332,7 +357,6 @@
           <th>Delta (%)</th>
         </tr>
       </thead>
-      <!-- All rows, including TOTAL, go into the same <tbody> -->
       <tbody id="portfolioRows"></tbody>
     </table>
 
@@ -356,7 +380,7 @@
 </div>
 
 <div class="footer">
-  &copy; Example – Final Fix
+  &copy; Example – Phase 1 Stabilization
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -375,7 +399,7 @@ let clientName = "";
 let totalPortfolioValue = 0;
 let originalPortfolioValue = 0;
 
-// Default risk: moderate
+// Default risk => moderate
 let userStockPct = 0.5, userBondPct = 0.4, userCashPct = 0.1;
 
 let currentChart, targetChart, finalChart;
@@ -470,11 +494,9 @@ function aggregateNode(node) {
 
 /***************************************************************
  * Compute Percentages
- * IMPORTANT: Use rootRef.targetDollar as the universal denominator
- * This guarantees if Target($)=Total($), then Target(%)=Total(%).
  ***************************************************************/
 function computePercentages(node, rootRef) {
-  // Single universal denominator:
+  // Single universal denominator => rootRef.targetDollar
   let denom = (rootRef.targetDollar > 0 ? rootRef.targetDollar : 1);
 
   node.currentPct   = (node.currentDollar   / denom) * 100;
@@ -495,7 +517,6 @@ function renderTable() {
   tb.innerHTML = "";
 
   root.children.forEach(asset => renderNode(asset, 0));
-
   buildTotalRow();  
 }
 
@@ -505,7 +526,6 @@ function renderNode(node, level) {
   else if (node.isPosition) tr.classList.add('position-row');
   else if (node.isAsset)    tr.classList.add('asset-row');
 
-  // Name cell
   let tdName = document.createElement('td');
   if (node.isAsset) {
     tdName.className = 'asset-col';
@@ -600,9 +620,6 @@ function renderNode(node, level) {
   }
 }
 
-/***************************************************************
- * Build the TOTAL row
- ***************************************************************/
 function buildTotalRow() {
   const tb = document.getElementById('portfolioRows');
 
@@ -612,7 +629,6 @@ function buildTotalRow() {
   let totDollar = root.totalDollar     || 0;
 
   let dval = tDollar - totDollar; 
-  // After fix, the same denominator = root.targetDollar
   let dpct = (root.targetPct || 0) - (root.totalPct || 0);
 
   let tr = document.createElement('tr');
@@ -668,8 +684,8 @@ function buildTotalRow() {
 }
 
 /***************************************************************
- * Proposed Cell Editing
- * Note that Proposed(%) is now a fraction of root.targetDollar
+ * Proposed Cell Editing => Single-click
+ * Phase 1: Validate & clamp extreme values
  ***************************************************************/
 function editProposedCell(cell, node, mode) {
   let oldVal = cell.textContent.replace(/,/g, '').replace(/[^\d.\-+]/g, '');
@@ -696,11 +712,21 @@ function finishProposedEdit(cell, node, rawVal, mode) {
   rawVal = rawVal.replace(/,/g, '');
   let val = parseFloat(rawVal) || 0;
 
+  // No negative values
+  if (val < 0) val = 0;
+
   if (mode === 'percent') {
-    // Use targetDollar for Proposed(%)
+    // Proposed(%) is fraction of root.targetDollar
+    // Also clamp at 200% in this example
+    if (val > 200) val = 200;
+
     let rt = (root.targetDollar > 0 ? root.targetDollar : 1);
     node.proposedDollar = (val / 100) * rt;
   } else {
+    // Proposed($): clamp to 2x totalPortfolioValue
+    if (val > 2 * totalPortfolioValue) {
+      val = 2 * totalPortfolioValue;
+    }
     node.proposedDollar = val;
   }
   renderAll();
@@ -736,9 +762,7 @@ function applyRiskAllocation() {
       ch.targetDollar = 0; 
     }
   });
-  root.children.forEach(ch => {
-    distributeTargets(ch);
-  });
+  root.children.forEach(ch => distributeTargets(ch));
 }
 
 function distributeTargets(node) {
@@ -762,8 +786,12 @@ function onRiskChange() {
   } else if (val === "aggressive") {
     userStockPct = 0.7; userBondPct = 0.2; userCashPct = 0.1;
   } else {
+    // moderate
     userStockPct = 0.5; userBondPct = 0.4; userCashPct = 0.1;
   }
+  // Update numeric input for Cash
+  document.getElementById('cashTargetInput').value = (userCashPct * 100).toFixed(0);
+
   document.getElementById('targetStocks').textContent = (userStockPct * 100).toFixed(0);
   document.getElementById('targetBonds').textContent  = (userBondPct * 100).toFixed(0);
   document.getElementById('targetCash').textContent   = (userCashPct * 100).toFixed(0);
@@ -771,6 +799,38 @@ function onRiskChange() {
   applyRiskAllocation();
   renderAll();
 }
+
+/***************************************************************
+ * Listen to changes in the "Cash Target (%)" input
+ ***************************************************************/
+document.getElementById('cashTargetInput').addEventListener('change', () => {
+  let newCashVal = parseFloat(document.getElementById('cashTargetInput').value) || 0;
+  if (newCashVal < 0) newCashVal = 0;
+  if (newCashVal > 100) newCashVal = 100;
+
+  userCashPct = newCashVal / 100;
+
+  // Preserve ratio for stocks:bonds
+  let oldStock = userStockPct;
+  let oldBond  = userBondPct;
+  let oldSum   = oldStock + oldBond;
+  if (oldSum < 0.0001) {
+    // fallback: all stocks if oldSum was near 0
+    userStockPct = 1 - userCashPct;
+    userBondPct  = 0;
+  } else {
+    let leftover = 1 - userCashPct;
+    userStockPct = leftover * (oldStock / oldSum);
+    userBondPct  = leftover * (oldBond  / oldSum);
+  }
+
+  document.getElementById('targetStocks').textContent = (userStockPct * 100).toFixed(0);
+  document.getElementById('targetBonds').textContent  = (userBondPct * 100).toFixed(0);
+  document.getElementById('targetCash').textContent   = (userCashPct * 100).toFixed(0);
+
+  applyRiskAllocation();
+  renderAll();
+});
 
 /***************************************************************
  * Generating & Scaling to Match Portfolio Value
@@ -834,8 +894,8 @@ function initCharts() {
       }]
     },
     options: {
-      responsive: true, 
-      maintainAspectRatio: true, 
+      responsive: true,
+      maintainAspectRatio: true,
       plugins: { legend: { position: 'bottom' } }
     }
   });
@@ -851,8 +911,8 @@ function initCharts() {
       }]
     },
     options: { 
-      responsive: true, 
-      maintainAspectRatio: true, 
+      responsive: true,
+      maintainAspectRatio: true,
       plugins: { legend: { position: 'bottom' } }
     }
   });
@@ -868,8 +928,8 @@ function initCharts() {
       }]
     },
     options: {
-      responsive: true, 
-      maintainAspectRatio: true, 
+      responsive: true,
+      maintainAspectRatio: true,
       plugins: { legend: { position: 'bottom' } }
     }
   });
@@ -940,6 +1000,7 @@ function withSignPct(value) {
 
 /***************************************************************
  * Enable Editing of Portfolio Value (clientValue)
+ * Phase 1: clamp if < 1
  ***************************************************************/
 function enablePortfolioValueEdit() {
   const valElem = document.getElementById('clientValue');
@@ -952,7 +1013,10 @@ function enablePortfolioValueEdit() {
     input.value = oldVal || '0';
 
     input.onblur = function() {
-      const parsed = parseFloat(input.value.replace(/,/g, '')) || 0;
+      let parsed = parseFloat(input.value.replace(/,/g, '')) || 0;
+      // Ensure portfolioValue never goes below 1
+      if (parsed < 1) parsed = 1;
+
       totalPortfolioValue = parsed;
       valElem.innerHTML = formatMoney(parsed);
       onRiskChange(); // re-apply risk
@@ -975,10 +1039,16 @@ function enablePortfolioValueEdit() {
  ***************************************************************/
 window.addEventListener('DOMContentLoaded', () => {
   initCharts();
-  enablePortfolioValueEdit();  
+  enablePortfolioValueEdit();
 
+  // If user changes risk, update the 3 target pcts
   document.getElementById('riskSelect').addEventListener('change', onRiskChange);
+
+  // Cash Target(%) input listener is defined above
+
+  // Generate new client scenario
   document.getElementById('newClientBtn').addEventListener('click', doGenerateNewClient);
+  // Reset trades
   document.getElementById('resetTradesBtn').addEventListener('click', doResetTrades);
 
   // Start
