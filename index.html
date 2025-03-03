@@ -13,7 +13,7 @@
       --proposed-col-border: #007bff;
       --editable-field-border: #ccc;
 
-      --section-bg: #fafafa; /* Additional subtle background for UI grouping */
+      --section-bg: #fafafa; /* Subtle background behind sub-panels */
     }
     body.dark-mode {
       --bg-body: #202020;
@@ -24,7 +24,7 @@
       --proposed-col-border: #66afff;
       --editable-field-border: #888;
 
-      --section-bg: #3a3a3a; 
+      --section-bg: #3a3a3a;
     }
     body {
       margin: 0;
@@ -59,7 +59,9 @@
       border: 2px solid #999;
       transition: background 0.3s;
     }
-    .dark-mode-toggle:hover { background: #444; }
+    .dark-mode-toggle:hover { 
+      background: #444; 
+    }
     body.dark-mode .dark-mode-toggle {
       background: #aaa; 
       border-color: #ccc;
@@ -67,6 +69,7 @@
     body.dark-mode .dark-mode-toggle:hover {
       background: #ccc;
     }
+
     .btn {
       padding: 0.5rem 1rem;
       border: none;
@@ -75,15 +78,19 @@
       cursor: pointer;
       border-radius: 3px;
       font-size: 0.9rem;
+      margin: 0.2rem;
     }
     .btn:hover {
       background: #0069d9;
     }
+
     .section {
       margin-bottom: 1.5rem;
       padding-bottom: 1rem;
       border-bottom: 1px solid #ddd;
     }
+
+    /* Layout columns for client profile & enhancements */
     .top-row {
       display: flex;
       gap: 2rem;
@@ -97,7 +104,6 @@
       border-radius: 4px;
       padding: 1rem;
     }
-    /* Headings within columns */
     .profile-col > h2, .enhancements-col > h2 {
       margin-top: 0;
       margin-bottom: 1rem;
@@ -109,14 +115,17 @@
       margin: 0.5rem 0;
     }
     .profile-actions {
-      margin-top: 1rem; 
+      margin-top: 1rem;
     }
-    #riskSelect { margin-left: 0.5rem; }
+    #riskSelect { 
+      margin-left: 0.5rem; 
+    }
     #cashTargetInput {
       width: 50px;
       text-align: right;
       margin-left: 0.5rem;
     }
+
     .editable-field {
       cursor: pointer;
       border: 1px dotted var(--editable-field-border);
@@ -124,7 +133,9 @@
       background: #fafafa;
       transition: border-color 0.3s;
     }
-    body.dark-mode .editable-field { background: #333; }
+    body.dark-mode .editable-field { 
+      background: #333; 
+    }
     .editable-field input {
       width: 80px;
       border: 1px solid #007bff;
@@ -133,7 +144,8 @@
       box-sizing: border-box;
       text-align: right;
     }
-    /* Enhancements section */
+
+    /* Enhancements column - custom profile */
     #custom-profile-section h3 {
       margin-top: 0;
       margin-bottom: 0.75rem;
@@ -149,7 +161,8 @@
       width: 50px;
       margin-right: 1rem;
     }
-    /* Portfolio Table & Buttons */
+
+    /* Portfolio header & table */
     .portfolio-header {
       display: flex; 
       align-items: center;
@@ -173,8 +186,8 @@
       padding: 0.4rem;
       border-bottom: 1px solid #eee;
       vertical-align: middle;
-      text-align: right;
-      overflow: hidden;
+      text-align: right;  
+      overflow: hidden;  
       white-space: nowrap;
       font-size: 0.88rem;
     }
@@ -203,20 +216,38 @@
       cursor: pointer;
       transition: border-color 0.3s;
     }
-    body.dark-mode .proposed-col { background: #333; }
-    .proposed-positive { color: green; font-weight: bold; }
-    .proposed-negative { color: red; font-weight: bold; }
-    .delta-positive { color: green; font-weight: bold; }
-    .delta-negative { color: red;   font-weight: bold; }
+    body.dark-mode .proposed-col { 
+      background: #333; 
+    }
+    .proposed-positive { 
+      color: green; 
+      font-weight: bold; 
+    }
+    .proposed-negative { 
+      color: red; 
+      font-weight: bold; 
+    }
+    .delta-positive { 
+      color: green; 
+      font-weight: bold; 
+    }
+    .delta-negative { 
+      color: red; 
+      font-weight: bold; 
+    }
     .expand-toggle {
-      cursor: pointer;
-      color: #007bff;
+      cursor: pointer; 
+      color: #007bff; 
       margin-right: 0.5rem;
     }
-    .class-row td { padding-left: 2em; }
-    .position-row td { padding-left: 4em; }
+    .class-row td { 
+      padding-left: 2em; 
+    }
+    .position-row td { 
+      padding-left: 4em; 
+    }
     .subtotal-row td {
-      font-weight: bold;
+      font-weight: bold; 
       background: #f0f0f0;
     }
     .total-row {
@@ -228,6 +259,7 @@
       border-top: 2px solid #ccc;
       padding: 8px;
     }
+
     /* Charts layout */
     .charts-container {
       display: flex;
@@ -271,14 +303,16 @@
   </style>
 </head>
 <body>
+
+  <!-- Dark Mode Toggle -->
   <div class="dark-mode-toggle" id="darkModeToggle"></div>
 
   <div class="container">
     <h1>Portfolio Manager Simulator – Phase 2 (Improved Layout)</h1>
 
-    <!-- Top Row: Left = Client Profile, Right = Enhancements -->
+    <!-- Top Row: side-by-side layout -->
     <div class="top-row">
-      <!-- CLIENT PROFILE COLUMN -->
+      <!-- Left: Client Profile -->
       <div class="profile-col">
         <h2>Client Profile</h2>
         <div class="profile-info">
@@ -311,10 +345,10 @@
         </div>
       </div>
 
-      <!-- ENHANCEMENTS COLUMN -->
+      <!-- Right: Enhancements (Import/Export, Custom Profiles) -->
       <div class="enhancements-col">
         <h2>Phase 2 Enhancements</h2>
-
+        
         <!-- Import / Export -->
         <div style="margin-bottom: 1rem;">
           <button class="btn" id="exportJSONBtn">Export JSON</button>
@@ -331,16 +365,16 @@
             <label>Bonds (%):</label>
             <input type="number" id="customBondPct" value="30"/>
           </div>
-          <div style="margin-top: 0.5rem;">
+          <div style="margin-top:0.5rem;">
             <label>Cash (%):</label>
             <input type="number" id="customCashPct" value="20"/>
             <label>Real Est. (%):</label>
             <input type="number" id="customRePct" value="10"/>
           </div>
-          <div style="margin-top: 0.5rem;">
+          <div style="margin-top:0.5rem;">
             <button class="btn" id="saveProfileBtn">Save as New Profile</button>
           </div>
-          <div style="margin-top: 0.5rem;">
+          <div style="margin-top:0.5rem;">
             <label>Apply Profile:</label>
             <select id="customProfilesSelect">
               <option value="">--No custom profile--</option>
@@ -351,7 +385,7 @@
       </div>
     </div>
 
-    <!-- Table & Charts -->
+    <!-- Portfolio Table & Charts -->
     <div class="section">
       <div class="portfolio-header">
         <h2>Current (or Projected) Portfolio</h2>
@@ -404,129 +438,116 @@
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
-    /* Exactly the same JS logic as the previous final version, 
-       just reusing all the functions (import/export, custom 
-       profiles, negative proposed, etc.) with the new layout & 
-       styling. 
-    */
-
-    /***************************************************************
-     * DATA MODEL + GLOBALS
-     ***************************************************************/
-    let root = { name: "ROOT", expanded: true, children: [] };
-    let originalData = null;
-    let clientName = "";
-    let totalPortfolioValue = 0;
-    let originalPortfolioValue = 0;
+    /********************************************************************
+     * EXACT SAME JS LOGIC as the final version, with no missing references:
+     ********************************************************************/
+    let root = {name:"ROOT",expanded:true,children:[]};
+    let originalData=null;
+    let clientName="";
+    let totalPortfolioValue=0;
+    let originalPortfolioValue=0;
 
     let userStockPct=0.5, userBondPct=0.4, userCashPct=0.1, userRePct=0;
 
     let currentChart, targetChart, finalChart;
-    let customProfiles = {};
+    let customProfiles={};
 
-    /***************************************************************
-     * DARK MODE
-     ***************************************************************/
-    const darkToggle= document.getElementById('darkModeToggle');
-    darkToggle.addEventListener('click', () => {
+    /* Dark Mode Toggle */
+    const darkToggle=document.getElementById('darkModeToggle');
+    darkToggle.addEventListener('click',()=>{
       document.body.classList.toggle('dark-mode');
     });
 
-    /***************************************************************
-     * IMPORT / EXPORT
-     ***************************************************************/
-    function exportJSON() {
-      let dataToExport = {
-        portfolioValue: totalPortfolioValue,
-        rootData: root
+    /* Import/Export */
+    function exportJSON(){
+      let dataToExport={
+        portfolioValue:totalPortfolioValue,
+        rootData:root
       };
-      let jsonStr = JSON.stringify(dataToExport, null, 2);
-      let blob = new Blob([jsonStr], { type: "application/json" });
-      let url = URL.createObjectURL(blob);
-      let a = document.createElement('a');
-      a.href = url;
-      a.download = "portfolio_export.json";
+      let jsonStr=JSON.stringify(dataToExport,null,2);
+      let blob=new Blob([jsonStr],{type:"application/json"});
+      let url=URL.createObjectURL(blob);
+      let a=document.createElement('a');
+      a.href=url;
+      a.download="portfolio_export.json";
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
     }
-    document.getElementById('importJSONFile').addEventListener('change', (ev) => {
-      let file = ev.target.files[0];
-      if (!file) return;
-      let reader = new FileReader();
-      reader.onload = (e) => {
-        try {
-          let parsed = JSON.parse(e.target.result);
-          if (parsed && parsed.rootData) {
-            totalPortfolioValue = parsed.portfolioValue || 100000;
-            root = parsed.rootData;
-            document.getElementById('clientValue').textContent = formatMoney(totalPortfolioValue);
+    document.getElementById('exportJSONBtn').addEventListener('click',exportJSON);
+    document.getElementById('importJSONBtn').addEventListener('click',()=>{
+      document.getElementById('importJSONFile').click();
+    });
+    document.getElementById('importJSONFile').addEventListener('change',(ev)=>{
+      let file=ev.target.files[0];
+      if(!file)return;
+      let reader=new FileReader();
+      reader.onload=(e)=>{
+        try{
+          let parsed=JSON.parse(e.target.result);
+          if(parsed&&parsed.rootData){
+            totalPortfolioValue=parsed.portfolioValue||100000;
+            root=parsed.rootData;
+            document.getElementById('clientValue').textContent=formatMoney(totalPortfolioValue);
             renderAll();
-            document.getElementById('tradeMessage').textContent = "Imported portfolio from JSON.";
+            document.getElementById('tradeMessage').textContent="Imported portfolio from JSON.";
           } else {
             alert("JSON format not recognized.");
           }
-        } catch(err) {
-          alert("Error parsing JSON file: " + err);
+        } catch(err){
+          alert("Error parsing JSON file: "+err);
         }
       };
       reader.readAsText(file);
     });
-    document.getElementById('importJSONBtn').addEventListener('click', () => {
-      document.getElementById('importJSONFile').click();
-    });
-    document.getElementById('exportJSONBtn').addEventListener('click', exportJSON);
 
-    /***************************************************************
-     * CUSTOM PROFILES
-     ***************************************************************/
-    function doSaveCustomProfile() {
-      let s  = parseFloat(document.getElementById('customStockPct').value)||0;
-      let b  = parseFloat(document.getElementById('customBondPct').value) ||0;
-      let c  = parseFloat(document.getElementById('customCashPct').value) ||0;
-      let re = parseFloat(document.getElementById('customRePct').value)   ||0;
-      let sum = s+b+c+re;
-      if (Math.abs(sum-100)>0.001) {
+    /* Custom Profiles */
+    function doSaveCustomProfile(){
+      let s = parseFloat(document.getElementById('customStockPct').value)||0;
+      let b = parseFloat(document.getElementById('customBondPct').value) ||0;
+      let c = parseFloat(document.getElementById('customCashPct').value) ||0;
+      let re= parseFloat(document.getElementById('customRePct').value)   ||0;
+      let sum=s+b+c+re;
+      if(Math.abs(sum-100)>0.001){
         alert("Your custom percentages must total 100%!");
         return;
       }
-      let name = prompt("Enter name for this profile:", "MyCustomProfile");
-      if(!name) return;
-      customProfiles[name]={stocks:s/100, bonds:b/100, cash:c/100, re:re/100};
+      let profileName=prompt("Enter a name for this profile:","MyCustomProfile");
+      if(!profileName)return;
+      customProfiles[profileName]={stocks:s/100,bonds:b/100,cash:c/100,re:re/100};
       let sel=document.getElementById('customProfilesSelect');
       let opt=document.createElement('option');
-      opt.value=name; opt.textContent=name;
+      opt.value=profileName; opt.textContent=profileName;
       sel.appendChild(opt);
       alert("Profile saved!");
     }
-    document.getElementById('saveProfileBtn').addEventListener('click', doSaveCustomProfile);
+    document.getElementById('saveProfileBtn').addEventListener('click',doSaveCustomProfile);
 
-    function doApplyCustomProfile() {
+    function doApplyCustomProfile(){
       let selVal=document.getElementById('customProfilesSelect').value;
-      if(!selVal||!customProfiles[selVal]) {
-        alert("No custom profile selected!");
+      if(!selVal||!customProfiles[selVal]){
+        alert("No custom profile selected.");
         return;
       }
-      let p=customProfiles[selVal];
-      userStockPct=p.stocks; userBondPct=p.bonds; userCashPct=p.cash; userRePct=p.re;
+      let prof=customProfiles[selVal];
+      userStockPct=prof.stocks; userBondPct=prof.bonds; userCashPct=prof.cash; userRePct=prof.re;
       document.getElementById('targetStocks').textContent=(userStockPct*100).toFixed(0);
       document.getElementById('targetBonds').textContent =(userBondPct*100).toFixed(0);
       document.getElementById('targetCash').textContent  =(userCashPct*100).toFixed(0);
+
       applyRiskAllocation();
       renderAll();
     }
-    document.getElementById('applyProfileBtn').addEventListener('click', doApplyCustomProfile);
+    document.getElementById('applyProfileBtn').addEventListener('click',doApplyCustomProfile);
 
-    /***************************************************************
-     * GENERATE RANDOM DATA
-     ***************************************************************/
-    function generateRandomNestedData() {
+    /* Generate Random Data */
+    function generateRandomNestedData(){
       root.children=[];
       let stocks={name:"Stocks",isAsset:true,expanded:true,children:[]};
       let bonds ={name:"Bonds", isAsset:true,expanded:true,children:[]};
       let cash  ={name:"Cash",  isAsset:true,expanded:true,children:[]};
-      let realE ={name:"Real Estate",isAsset:true,expanded:true,children:[]};
+      let realE ={name:"Real Estate", isAsset:true, expanded:true, children:[]};
 
       stocks.children.push({
         name:"Large Cap", isClass:true, expanded:true, 
@@ -540,60 +561,60 @@
       bonds.children.push(makePosition("Gov Bond B"));
 
       cash.currentDollar = roundTo100(3000+Math.random()*2000);
-      cash.targetDollar  =0;
+      cash.targetDollar = 0;
 
       realE.children.push(makePosition("REIT Fund"));
 
       root.children.push(stocks,bonds,cash,realE);
     }
-    function makePosition(tick) {
-      let c=3000+Math.random()*9000;
-      let t=c+(Math.random()-0.5)*2000;
+    function makePosition(ticker){
+      let cur=3000+Math.random()*9000;
+      let tar=cur+(Math.random()-0.5)*2000;
       return {
-        name:tick, isPosition:true, expanded:true,
-        currentDollar:roundTo100(c),targetDollar:roundTo100(t),
-        proposedDollar:0,totalDollar:0
+        name:ticker,
+        isPosition:true,
+        expanded:true,
+        currentDollar: roundTo100(cur),
+        targetDollar:  roundTo100(tar),
+        proposedDollar:0,
+        totalDollar:0
       };
     }
-    function roundTo100(x) {return Math.round(x/100)*100;}
+    function roundTo100(x){return Math.round(x/100)*100;}
 
-    /***************************************************************
-     * AGGREGATION
-     ***************************************************************/
-    function aggregateNode(node) {
-      if(!node.children||node.children.length===0) {
+    /* Aggregation */
+    function aggregateNode(node){
+      if(!node.children||node.children.length===0){
         node.totalDollar=(node.currentDollar||0)+(node.proposedDollar||0);
         return;
       }
       let c=0,t=0,p=0,tot=0;
       node.children.forEach(ch=>{
         aggregateNode(ch);
-        c+=ch.currentDollar||0; t+=ch.targetDollar||0;
-        p+=ch.proposedDollar||0; tot+=ch.totalDollar||0;
+        c+=ch.currentDollar||0;
+        t+=ch.targetDollar||0;
+        p+=ch.proposedDollar||0;
+        tot+=ch.totalDollar||0;
       });
       node.currentDollar=c; node.targetDollar=t;
       node.proposedDollar=p; node.totalDollar=tot;
     }
 
-    /***************************************************************
-     * COMPUTE PERCENTAGES
-     ***************************************************************/
-    function computePercentages(node, rootRef) {
+    /* Compute % */
+    function computePercentages(node, rootRef){
       let denom=(rootRef.targetDollar>0?rootRef.targetDollar:1);
-      node.currentPct   =(node.currentDollar  /denom)*100;
-      node.targetPct    =(node.targetDollar   /denom)*100;
-      node.totalPct     =(node.totalDollar    /denom)*100;
-      node.proposedPct  =(node.proposedDollar/denom)*100;
-      if(node.children&&node.children.length>0) {
+      node.currentPct   =(node.currentDollar   /denom)*100;
+      node.targetPct    =(node.targetDollar    /denom)*100;
+      node.totalPct     =(node.totalDollar     /denom)*100;
+      node.proposedPct  =(node.proposedDollar /denom)*100;
+      if(node.children&&node.children.length>0){
         node.children.forEach(ch=>computePercentages(ch,rootRef));
       }
     }
 
-    /***************************************************************
-     * TABLE RENDERING
-     ***************************************************************/
+    /* Table Rendering */
     function renderTable(){
-      let tb=document.getElementById('portfolioRows');
+      const tb=document.getElementById('portfolioRows');
       tb.innerHTML="";
       root.children.forEach(a=>renderNode(a,0));
       buildTotalRow();
@@ -611,31 +632,32 @@
         toggler.className='expand-toggle';
         toggler.textContent=node.expanded?"▼":"▶";
         toggler.onclick=()=>{
-          node.expanded=!node.expanded;renderAll();
+          node.expanded=!node.expanded;
+          renderAll();
         };
         tdName.appendChild(toggler);
       }
       tdName.appendChild(document.createTextNode(node.name));
       tr.appendChild(tdName);
 
-      // Current($)
+      // 1) Current($)
       let tdCur=document.createElement('td');
       tdCur.textContent=formatMoney(node.currentDollar||0);
       tr.appendChild(tdCur);
 
-      // Target($)
+      // 2) Target($)
       let tdTar=document.createElement('td');
       tdTar.textContent=formatMoney(node.targetDollar||0);
       tr.appendChild(tdTar);
 
-      // Delta($)= target - total
+      // 3) Delta($)
       let dval=(node.targetDollar||0)-(node.totalDollar||0);
       let tdDelta=document.createElement('td');
       tdDelta.textContent=withSignMoney(dval);
       colorDeltaCell(tdDelta,dval);
       tr.appendChild(tdDelta);
 
-      // Proposed($)
+      // 4) Proposed($)
       let tdProp=document.createElement('td');
       tdProp.className='proposed-col';
       let pd=node.proposedDollar||0;
@@ -647,29 +669,29 @@
       tdProp.onclick=()=>editProposedCell(tdProp,node,'dollar');
       tr.appendChild(tdProp);
 
-      // Total($)
+      // 5) Total($)
       let tdTot=document.createElement('td');
       tdTot.textContent=formatMoney(node.totalDollar||0);
       tr.appendChild(tdTot);
 
-      // Current(%)
+      // 6) Current(%)
       let tdCurPct=document.createElement('td');
       tdCurPct.textContent=(node.currentPct||0).toFixed(2)+"%";
       tr.appendChild(tdCurPct);
 
-      // Target(%)
+      // 7) Target(%)
       let tdTarPct=document.createElement('td');
       tdTarPct.textContent=(node.targetPct||0).toFixed(2)+"%";
       tr.appendChild(tdTarPct);
 
-      // Delta(%)
+      // 8) Delta(%)
       let dp=(node.targetPct||0)-(node.totalPct||0);
       let tdDeltaPct=document.createElement('td');
       tdDeltaPct.textContent=withSignPct(dp);
       colorDeltaCell(tdDeltaPct,dp);
       tr.appendChild(tdDeltaPct);
 
-      // Proposed(%)
+      // 9) Proposed(%)
       let tdPropPct=document.createElement('td');
       tdPropPct.className='proposed-col';
       let pp=node.proposedPct||0;
@@ -681,83 +703,71 @@
       tdPropPct.onclick=()=>editProposedCell(tdPropPct,node,'percent');
       tr.appendChild(tdPropPct);
 
-      // Total(%)
+      // 10) Total(%)
       let tdTotPct=document.createElement('td');
       let tp=node.totalPct||0;
       tdTotPct.textContent=tp.toFixed(2)+"%";
       tr.appendChild(tdTotPct);
 
-      tb.appendChild(tr);
+      document.getElementById('portfolioRows').appendChild(tr);
 
       if(node.expanded&&node.children&&node.children.length>0){
         node.children.forEach(ch=>renderNode(ch,level+1));
       }
     }
-
     function buildTotalRow(){
-      let tb=document.getElementById('portfolioRows');
-      let cDollar=root.currentDollar||0;
-      let tDollar=root.targetDollar||0;
-      let pDollar=root.proposedDollar||0;
-      let totDollar=root.totalDollar||0;
-      let dval=tDollar - totDollar;
+      const tb=document.getElementById('portfolioRows');
+      let cDollar =root.currentDollar  ||0;
+      let tDollar =root.targetDollar   ||0;
+      let pDollar =root.proposedDollar ||0;
+      let totDollar=root.totalDollar   ||0;
+      let dval=tDollar-totDollar;
       let dpct=(root.targetPct||0)-(root.totalPct||0);
       let tr=document.createElement('tr');
       tr.classList.add('total-row');
 
-      // Label
       let tdLabel=document.createElement('td');
       tdLabel.textContent="Total Portfolio";
       tr.appendChild(tdLabel);
 
-      // Current($)
       let tdCurr=document.createElement('td');
       tdCurr.textContent=formatMoney(cDollar);
       tr.appendChild(tdCurr);
 
-      // Target($)
       let tdTarg=document.createElement('td');
       tdTarg.textContent=formatMoney(tDollar);
       tr.appendChild(tdTarg);
 
-      // Delta($)
       let tdDelta=document.createElement('td');
       tdDelta.textContent=withSignMoney(dval);
       colorDeltaCell(tdDelta,dval);
       tr.appendChild(tdDelta);
 
-      // Proposed($)
       let tdProp=document.createElement('td');
       tdProp.textContent=formatMoney(pDollar);
       tr.appendChild(tdProp);
 
-      // Total($)
       let tdTot=document.createElement('td');
       tdTot.textContent=formatMoney(totDollar);
       tr.appendChild(tdTot);
 
-      // Current(%)
       let tdCurrPct=document.createElement('td');
       tdCurrPct.textContent=(root.currentPct||0).toFixed(2)+"%";
       tr.appendChild(tdCurrPct);
 
-      // Target(%)
       let tdTargPct=document.createElement('td');
       tdTargPct.textContent=(root.targetPct||0).toFixed(2)+"%";
       tr.appendChild(tdTargPct);
 
-      // Delta(%)
       let tdDeltaPct=document.createElement('td');
       tdDeltaPct.textContent=withSignPct(dpct);
       colorDeltaCell(tdDeltaPct,dpct);
       tr.appendChild(tdDeltaPct);
 
-      // Proposed(%)
       let tdPropPct=document.createElement('td');
       tdPropPct.textContent=(root.proposedPct||0).toFixed(2)+"%";
       tr.appendChild(tdPropPct);
 
-      // Total(%)
       let tdTotPct=document.createElement('td');
       tdTotPct.textContent=(root.totalPct||0).toFixed(2)+"%";
       tr.appendChild(tdTotPct);
@@ -765,9 +775,7 @@
       tb.appendChild(tr);
     }
 
-    /***************************************************************
-     * PROPOSED EDITING
-     ***************************************************************/
+    /* Proposed Editing */
     function editProposedCell(cell,node,mode){
       let oldVal=cell.textContent.replace(/,/g,'').replace(/[^\d.\-+]/g,'');
       cell.onclick=null;
@@ -779,7 +787,7 @@
       input.onblur=()=>finishProposedEdit(cell,node,input.value,mode);
       input.onkeydown=(ev)=>{
         if(ev.key==='Enter'){
-          ev.preventDefault();input.blur();
+          ev.preventDefault(); input.blur();
         }
       };
       cell.appendChild(input);
@@ -787,21 +795,20 @@
     }
     function finishProposedEdit(cell,node,rawVal,mode){
       rawVal=rawVal.replace(/,/g,'');
-      let val=parseFloat(rawVal);if(isNaN(val))val=0;
+      let val=parseFloat(rawVal);
+      if(isNaN(val))val=0;
       if(mode==='percent'){
         if(val>200)val=200;
         let rt=(root.targetDollar>0?root.targetDollar:1);
         node.proposedDollar=(val/100)*rt;
-      } else {
+      }else{
         if(val>2*totalPortfolioValue)val=2*totalPortfolioValue;
         node.proposedDollar=val;
       }
       renderAll();
     }
 
-    /***************************************************************
-     * RECALC & RERENDER
-     ***************************************************************/
+    /* Recalc & Rerender */
     function renderAll(){
       aggregateNode(root);
       computePercentages(root,root);
@@ -809,16 +816,13 @@
       updateCharts();
     }
 
-    /***************************************************************
-     * RISK REBALANCING
-     ***************************************************************/
+    /* Risk Rebalancing */
     function applyRiskAllocation(){
       let tVal=totalPortfolioValue;
       let stocksVal=userStockPct*tVal;
-      let bondsVal =userBondPct *tVal;
-      let cashVal  =userCashPct *tVal;
-      let realEVal =userRePct   *tVal;
-
+      let bondsVal =userBondPct*tVal;
+      let cashVal  =userCashPct*tVal;
+      let realEVal=userRePct   *tVal;
       root.children.forEach(ch=>{
         if(/stock/i.test(ch.name))ch.targetDollar=stocksVal;
         else if(/bond/i.test(ch.name))ch.targetDollar=bondsVal;
@@ -838,10 +842,6 @@
         distributeTargets(ch);
       });
     }
-
-    /***************************************************************
-     * SHIFTING RISK
-     ***************************************************************/
     function onRiskChange(){
       let val=document.getElementById('riskSelect').value;
       if(val==="conservative"){
@@ -858,18 +858,18 @@
       applyRiskAllocation();
       renderAll();
     }
-    document.getElementById('cashTargetInput').addEventListener('change', ()=>{
+    document.getElementById('cashTargetInput').addEventListener('change',()=>{
       let newCashVal=parseFloat(document.getElementById('cashTargetInput').value)||0;
       if(newCashVal<0)newCashVal=0;if(newCashVal>100)newCashVal=100;
       userCashPct=newCashVal/100;
-      let oldStock=userStockPct;let oldBond=userBondPct; let oldRe=userRePct;
+      let oldStock=userStockPct; let oldBond=userBondPct; let oldRe=userRePct;
       let oldSum=oldStock+oldBond+oldRe;
       let leftover=1-userCashPct;
       if(oldSum<0.0001){
-        userStockPct=leftover;userBondPct=0;userRePct=0;
-      } else {
+        userStockPct=leftover; userBondPct=0; userRePct=0;
+      }else{
         let ratio=leftover/oldSum;
-        userStockPct*=ratio;userBondPct*=ratio;userRePct*=ratio;
+        userStockPct*=ratio; userBondPct*=ratio; userRePct*=ratio;
       }
       document.getElementById('targetStocks').textContent=(userStockPct*100).toFixed(0);
       document.getElementById('targetBonds').textContent =(userBondPct*100).toFixed(0);
@@ -878,15 +878,13 @@
       renderAll();
     });
 
-    /***************************************************************
-     * GENERATE & SCALE
-     ***************************************************************/
+    /* Generate & Scale */
     function doGenerateNewClient(){
       const names=["John Smith","Jane Doe","Alex Johnson","Maria Garcia","Lee Wong"];
       let n=names[Math.floor(Math.random()*names.length)];
       clientName=n;
       document.getElementById('clientName').textContent=n;
-      let val=80000+Math.random()*40000; //80k-120k
+      let val=80000+Math.random()*40000;
       val=Math.round(val/100)*100;
       totalPortfolioValue=val;
       document.getElementById('clientValue').textContent=formatMoney(val);
@@ -904,7 +902,7 @@
       applyRiskAllocation();
       renderAll();
     }
-    function scaleNode(node, ratio){
+    function scaleNode(node,ratio){
       if(!node.children||node.children.length===0){
         node.currentDollar=Math.round(node.currentDollar*ratio);
         node.targetDollar=Math.round(node.targetDollar*ratio);
@@ -912,7 +910,6 @@
       }
       node.children.forEach(ch=>scaleNode(ch,ratio));
     }
-
     function doResetTrades(){
       if(originalData){
         root=JSON.parse(JSON.stringify(originalData));
@@ -923,9 +920,7 @@
       }
     }
 
-    /***************************************************************
-     * REBALANCE
-     ***************************************************************/
+    /* Rebalance */
     function doRebalance(){
       setProposedRebalance(root);
       renderAll();
@@ -939,9 +934,7 @@
       node.children.forEach(ch=>setProposedRebalance(ch));
     }
 
-    /***************************************************************
-     * CHARTS
-     ***************************************************************/
+    /* Chart init & update */
     function initCharts(){
       currentChart=new Chart(document.getElementById('currentChart'),{
         type:'pie',
@@ -1013,11 +1006,9 @@
       finalChart.update();
     }
 
-    /***************************************************************
-     * UTILITY
-     ***************************************************************/
+    /* Utility */
     function formatMoney(x){
-      return new Intl.NumberFormat('en-US', {
+      return new Intl.NumberFormat('en-US',{
         style:'decimal',
         minimumFractionDigits:2,
         maximumFractionDigits:2
@@ -1052,12 +1043,10 @@
       return "0.00%";
     }
 
-    /***************************************************************
-     * ENABLE EDITING OF PORTFOLIO VALUE
-     ***************************************************************/
+    /* Enable Editing of Portfolio Value */
     function enablePortfolioValueEdit(){
       const valElem=document.getElementById('clientValue');
-      valElem.addEventListener('click',function onClick(){
+      valElem.addEventListener('click',function(){
         const oldVal=valElem.textContent.replace(/,/g,'').replace(/[^\d.\-+]/g,'');
         valElem.innerHTML='';
         const input=document.createElement('input');
@@ -1081,21 +1070,14 @@
       });
     }
 
-    /***************************************************************
-     * STARTUP
-     ***************************************************************/
+    /* STARTUP */
     window.addEventListener('DOMContentLoaded',()=>{
       initCharts();
       enablePortfolioValueEdit();
-
-      // Risk dropdown
       document.getElementById('riskSelect').addEventListener('change', onRiskChange);
-
-      // Custom Profile events handled above
-      // JSON Import/Export events handled above
-      document.getElementById('newClientBtn').addEventListener('click',doGenerateNewClient);
-      document.getElementById('resetTradesBtn').addEventListener('click',doResetTrades);
-      document.getElementById('rebalanceBtn').addEventListener('click',doRebalance);
+      document.getElementById('newClientBtn').addEventListener('click', doGenerateNewClient);
+      document.getElementById('resetTradesBtn').addEventListener('click', doResetTrades);
+      document.getElementById('rebalanceBtn').addEventListener('click', doRebalance);
 
       onRiskChange();
       doGenerateNewClient();
