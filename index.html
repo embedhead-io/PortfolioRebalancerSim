@@ -170,101 +170,6 @@
     /* Table & expansions */
     table {
       width: 100%;
-      table-layout: fixed;
-      border-collapse: separate;
-      border-spacing: 0;
-      margin: 1rem 0;
-      transition: background var(--transition-speed), color var(--transition-speed);
-      border-radius: 8px;
-      overflow: hidden;
-      box-shadow: var(--shadow-sm);
-    }
-    thead th {
-      background: var(--header-footer-bg);
-      font-weight: 600;
-      text-transform: uppercase;
-      font-size: 0.85rem;
-      letter-spacing: 0.5px;
-      padding: 1rem 0.5rem;
-      border-bottom: 2px solid var(--border-color);
-    }
-    th, td {
-      padding: 0.75rem 0.5rem;
-      border-bottom: 1px solid var(--border-color);
-      vertical-align: middle;
-      text-align: right;
-      overflow: hidden;
-      white-space: nowrap;
-    }
-    tr:last-child td {
-      border-bottom: none;
-    }
-    tr:hover td {
-      background: rgba(0, 123, 255, 0.05);
-    }
-    body.dark-mode tr:hover td {
-      background: rgba(255, 255, 255, 0.05);
-    }
-
-    /* Form elements */
-    select, input[type="number"], input[type="text"] {
-      padding: 0.5rem;
-      border: 1px solid var(--border-color);
-      border-radius: 4px;
-      font-size: 0.9rem;
-      transition: all var(--transition-speed);
-      background: var(--bg-container);
-      color: var(--text-color);
-    }
-    select:focus, input[type="number"]:focus, input[type="text"]:focus {
-      outline: none;
-      border-color: var(--primary-color);
-      box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
-    }
-    select {
-      cursor: pointer;
-      appearance: none;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23666' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E");
-      background-repeat: no-repeat;
-      background-position: right 0.5rem center;
-      padding-right: 2rem;
-    }
-    body.dark-mode select {
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23aaa' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E");
-    }
-
-    /* Editable fields */
-    .editable-field {
-      cursor: pointer;
-      border: 1px dotted var(--editable-field-border);
-      padding: 0.25rem 0.5rem;
-      background: var(--bg-container);
-      transition: all var(--transition-speed);
-      border-radius: 4px;
-    }
-    .editable-field:hover {
-      border-style: solid;
-      background: rgba(0, 123, 255, 0.05);
-    }
-    body.dark-mode .editable-field:hover {
-      background: rgba(255, 255, 255, 0.05);
-    }
-    .editable-field input {
-      width: 100px;
-      border: 1px solid var(--primary-color);
-      outline: none;
-      font: inherit;
-      box-sizing: border-box;
-      text-align: right;
-      background: var(--bg-container);
-      color: var(--text-color);
-      padding: 0.25rem 0.5rem;
-      border-radius: 4px;
-    }
-
-    /* Table & expansions */
-    table {
-      width: 100%;
       table-layout: fixed; 
       border-collapse: collapse;
       margin: 0.5rem 0;
@@ -272,14 +177,21 @@
     }
     thead th {
       background: var(--header-footer-bg);
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+      padding: 0.5rem 0.3rem;
     }
     th, td {
-      padding: 0.4rem;
+      padding: 0.3rem 0.3rem;
       border-bottom: 1px solid #eee;
       vertical-align: middle;
       text-align: right;  
       overflow: hidden;  
       white-space: nowrap;
+      font-size: 0.85rem;
+      text-overflow: ellipsis;
     }
     /* 11 columns: Name + 5 for dollars + 5 for percents */
     thead th:nth-child(1)  { width: 14%; text-align: left; }
@@ -512,7 +424,9 @@
 </head>
 <body>
 
-<div class="dark-mode-toggle" id="darkModeToggle"></div>
+<div class="dark-mode-toggle" id="darkModeToggle">
+  <i class="fas fa-moon"></i>
+</div>
 
 <div class="container">
   <h1>Portfolio Manager Simulator – Phase 2 (Asset/Class-Level Trades)</h1>
@@ -544,7 +458,8 @@
         <input type="number" id="cashTargetInput" value="10" min="0" max="100" step="1"/>
       </p>
       <div class="profile-actions">
-        <button class="btn" id="newClientBtn">Generate New Client</button>
+        <button class="btn" id="newClientBtn"><i class="fas fa-user-plus"></i> Generate New Client</button>
+        <button class="btn" id="rebalanceBtn"><i class="fas fa-balance-scale"></i> Rebalance</button>
       </div>
     </div>
   </div>
@@ -554,7 +469,7 @@
     <div class="portfolio-header">
       <h2>Current (or Projected) Portfolio</h2>
       <div class="portfolio-buttons">
-        <button class="btn" id="resetTradesBtn">Reset Trades</button>
+        <button class="btn" id="resetTradesBtn"><i class="fas fa-undo"></i> Reset Trades</button>
       </div>
     </div>
 
@@ -579,16 +494,28 @@
 
     <div class="charts-container">
       <div class="chart-box">
-        <div class="chart-title">Current Allocation</div>
-        <canvas id="currentChart"></canvas>
+        <div class="chart-title"><i class="fas fa-chart-pie"></i> Current Allocation</div>
+        <div class="chart-container">
+          <canvas id="currentChart"></canvas>
+        </div>
       </div>
       <div class="chart-box">
-        <div class="chart-title">Target Allocation</div>
-        <canvas id="targetChart"></canvas>
+        <div class="chart-title"><i class="fas fa-bullseye"></i> Target Allocation</div>
+        <div class="chart-container">
+          <canvas id="targetChart"></canvas>
+        </div>
       </div>
       <div class="chart-box">
-        <div class="chart-title">Total Allocation</div>
-        <canvas id="finalChart"></canvas>
+        <div class="chart-title"><i class="fas fa-check-circle"></i> Total Allocation</div>
+        <div class="chart-container">
+          <canvas id="finalChart"></canvas>
+        </div>
+      </div>
+      <div class="chart-box">
+        <div class="chart-title"><i class="fas fa-chart-line"></i> Risk Metrics</div>
+        <div class="chart-container">
+          <canvas id="riskMetricsChart"></canvas>
+        </div>
       </div>
     </div>
 
@@ -625,7 +552,26 @@ let currentChart, targetChart, finalChart;
  ***************************************************************/
 const darkToggle = document.getElementById('darkModeToggle');
 darkToggle.addEventListener('click', () => {
-  document.body.classList.toggle('dark-mode');
+  const isDarkMode = document.body.classList.toggle('dark-mode');
+  // Update icon
+  const icon = darkToggle.querySelector('i');
+  if (isDarkMode) {
+    icon.className = 'fas fa-sun';
+  } else {
+    icon.className = 'fas fa-moon';
+  }
+  
+  // Store preference
+  localStorage.setItem('darkMode', isDarkMode);
+});
+
+// Check for saved dark mode preference
+window.addEventListener('DOMContentLoaded', () => {
+  const savedDarkMode = localStorage.getItem('darkMode');
+  if (savedDarkMode === 'true') {
+    document.body.classList.add('dark-mode');
+    darkToggle.querySelector('i').className = 'fas fa-sun';
+  }
 });
 
 /***************************************************************
@@ -644,17 +590,43 @@ function assignParents(node, parent = null) {
 function generateRandomNestedData() {
   root.children = [];
 
-  let stocks = { name: "Stocks", isAsset: true, expanded: true, children: [] };
-  let bonds  = { name: "Bonds",  isAsset: true, expanded: true, children: [] };
-  let cash   = { name: "Cash",   isAsset: true, expanded: true, children: [] };
+  let stocks = { 
+    name: "Stocks", 
+    isAsset: true, 
+    expanded: true, 
+    children: [],
+    volatility: 0.20,           // 20% annual volatility
+    expectedReturn: 0.10,       // 10% expected return
+    beta: 1.0                   // Market beta
+  };
+  
+  let bonds = { 
+    name: "Bonds",  
+    isAsset: true, 
+    expanded: true, 
+    children: [],
+    volatility: 0.05,           // 5% annual volatility  
+    expectedReturn: 0.04,       // 4% expected return
+    beta: 0.2                   // Lower beta than stocks
+  };
+  
+  let cash = { 
+    name: "Cash",   
+    isAsset: true, 
+    expanded: true, 
+    children: [],
+    volatility: 0.01,           // 1% annual volatility
+    expectedReturn: 0.02,       // 2% expected return
+    beta: 0.0                   // No correlation with market
+  };
 
   stocks.children.push({
     name: "Large Cap", 
     isClass: true, 
     expanded: true, 
     children: [
-      makePosition("AAPL"), 
-      makePosition("MSFT")
+      makePosition("AAPL", 0.25, 0.12, 1.2), // Higher volatility tech stock
+      makePosition("MSFT", 0.22, 0.10, 1.1)  // Slightly lower volatility tech stock
     ]
   });
   stocks.children.push({
@@ -662,13 +634,13 @@ function generateRandomNestedData() {
     isClass: true, 
     expanded: true, 
     children: [
-      makePosition("RGEN"), 
-      makePosition("FIZZ")
+      makePosition("RGEN", 0.35, 0.15, 1.5), // Higher volatility small cap
+      makePosition("FIZZ", 0.28, 0.11, 1.3)  // Still higher volatility than large caps
     ]
   });
 
-  bonds.children.push(makePosition("Corp Bond A"));
-  bonds.children.push(makePosition("Gov Bond B"));
+  bonds.children.push(makePosition("Corp Bond A", 0.06, 0.05, 0.3));
+  bonds.children.push(makePosition("Gov Bond B", 0.03, 0.03, 0.1));
 
   cash.currentDollar = roundTo100(3000 + Math.random() * 2000);
   cash.targetDollar  = 0; 
@@ -676,7 +648,7 @@ function generateRandomNestedData() {
   root.children.push(stocks, bonds, cash);
 }
 
-function makePosition(ticker) {
+function makePosition(ticker, volatility = 0.2, expectedReturn = 0.08, beta = 1.0) {
   let cur = 3000 + Math.random() * 9000;
   let tar = cur + (Math.random() - 0.5) * 2000;
   return {
@@ -686,7 +658,12 @@ function makePosition(ticker) {
     currentDollar: roundTo100(cur),
     targetDollar:  roundTo100(tar),
     proposedDollar: 0,
-    totalDollar: 0
+    totalDollar: 0,
+    volatility: volatility,           // Annual volatility
+    expectedReturn: expectedReturn,   // Expected annual return
+    beta: beta,                       // Market beta
+    costBasis: roundTo100(cur * 0.8), // 80% of current value as cost basis
+    holdingPeriod: Math.floor(Math.random() * 500) // Random holding period up to 500 days
   };
 }
 
@@ -1001,10 +978,49 @@ function finishProposedEdit(cell, node, rawVal, mode) {
  * Recalc & Rerender
  ***************************************************************/
 function renderAll() {
-  aggregateNode(root);
-  computePercentages(root, root);
-  renderTable();
-  updateCharts();
+  try {
+    // Step 1: Aggregate values from bottom up
+    aggregateNode(root);
+    
+    // Step 2: Compute percentages
+    computePercentages(root, root);
+    
+    // Step 3: Render the table
+    renderTable();
+    
+    // Step 4: Update allocation charts
+    updateCharts();
+    
+    // Step 5: Update analytics dashboard
+    try {
+      portfolioAnalytics.updateAnalyticsDashboard();
+    } catch (analyticsError) {
+      console.error('Error updating analytics dashboard:', analyticsError);
+    }
+    
+    // Step 6: Update risk metrics chart if available
+    try {
+      if (window.riskMetricsChart) {
+        const metrics = portfolioAnalytics.calculateRiskMetrics();
+        riskMetricsChart.data.datasets[0].data = [
+          metrics.volatility * 100,  // Scale to percentage
+          metrics.beta,
+          metrics.sharpeRatio,
+          metrics.correlation
+        ];
+        riskMetricsChart.update();
+      }
+    } catch (chartError) {
+      console.error('Error updating risk metrics chart:', chartError);
+    }
+  } catch (error) {
+    console.error('Error in renderAll:', error);
+    const messageElement = document.getElementById('tradeMessage');
+    if (messageElement) {
+      messageElement.textContent = "Error rendering portfolio: " + error.message;
+      messageElement.className = "error";
+    }
+  }
 }
 
 /***************************************************************
@@ -1059,6 +1075,36 @@ function onRiskChange() {
   document.getElementById('targetBonds').textContent  = (userBondPct * 100).toFixed(0);
   document.getElementById('targetCash').textContent   = (userCashPct * 100).toFixed(0);
 
+  applyRiskAllocation();
+  renderAll();
+}
+
+/***************************************************************
+ * Handle Cash Target Change
+ ***************************************************************/
+function onCashTargetChange() {
+  const cashTargetVal = parseFloat(document.getElementById('cashTargetInput').value) / 100;
+  if (isNaN(cashTargetVal) || cashTargetVal < 0 || cashTargetVal > 1) {
+    // Reset to previous value if invalid
+    document.getElementById('cashTargetInput').value = (userCashPct * 100).toFixed(0);
+    return;
+  }
+  
+  // Update cash percentage
+  userCashPct = cashTargetVal;
+  
+  // Adjust stocks and bonds proportionally
+  const remainingPct = 1 - userCashPct;
+  const currentRatio = userStockPct / (userStockPct + userBondPct);
+  
+  userStockPct = remainingPct * currentRatio;
+  userBondPct = remainingPct * (1 - currentRatio);
+  
+  // Update display
+  document.getElementById('targetStocks').textContent = (userStockPct * 100).toFixed(0);
+  document.getElementById('targetBonds').textContent = (userBondPct * 100).toFixed(0);
+  document.getElementById('targetCash').textContent = (userCashPct * 100).toFixed(0);
+  
   applyRiskAllocation();
   renderAll();
 }
@@ -1169,6 +1215,58 @@ function initCharts() {
       plugins: { legend: { position: 'bottom' } }
     }
   });
+  
+  // Add risk metrics chart
+  window.riskMetricsChart = new Chart(document.getElementById('riskMetricsChart'), {
+    type: 'radar',
+    data: {
+      labels: ['Volatility (%)', 'Beta', 'Sharpe Ratio', 'Correlation'],
+      datasets: [{
+        label: 'Portfolio Risk Metrics',
+        data: [0, 0, 0, 0],
+        backgroundColor: 'rgba(33, 150, 243, 0.2)',
+        borderColor: '#2196f3',
+        borderWidth: 2,
+        pointBackgroundColor: '#2196f3',
+        pointBorderColor: '#fff',
+        pointHoverBackgroundColor: '#fff',
+        pointHoverBorderColor: '#2196f3'
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      scales: {
+        r: {
+          angleLines: {
+            display: true
+          },
+          suggestedMin: 0,
+          suggestedMax: 100
+        }
+      },
+      plugins: { 
+        legend: { 
+          position: 'bottom'
+        },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              const label = context.dataset.label;
+              const value = context.raw;
+              const metricName = context.chart.data.labels[context.dataIndex];
+              
+              if (metricName === 'Volatility (%)') {
+                return `${label}: ${value.toFixed(2)}%`;
+              } else {
+                return `${label}: ${value.toFixed(2)}`;
+              }
+            }
+          }
+        }
+      }
+    }
+  });
 }
 
 function updateCharts() {
@@ -1234,6 +1332,63 @@ function withSignPct(value) {
   return "0.00%";
 }
 
+// Comprehensive utility object for use by new features
+const utils = {
+  formatCurrency: (value) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(value);
+  },
+  formatPercent: (value) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'percent',
+      minimumFractionDigits: 1,
+      maximumFractionDigits: 1
+    }).format(value / 100);
+  },
+  validateNumber: (value, min, max) => {
+    const num = Number(value);
+    if (isNaN(num)) return false;
+    return num >= min && num <= max;
+  },
+  showError: (message) => {
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'error-message';
+    errorDiv.textContent = message;
+    errorDiv.style.position = 'fixed';
+    errorDiv.style.top = '20px';
+    errorDiv.style.left = '50%';
+    errorDiv.style.transform = 'translateX(-50%)';
+    errorDiv.style.backgroundColor = 'rgba(220, 53, 69, 0.9)';
+    errorDiv.style.color = 'white';
+    errorDiv.style.padding = '10px 20px';
+    errorDiv.style.borderRadius = '4px';
+    errorDiv.style.zIndex = '1000';
+    document.body.appendChild(errorDiv);
+    
+    setTimeout(() => {
+      errorDiv.style.opacity = '0';
+      errorDiv.style.transition = 'opacity 0.5s';
+      setTimeout(() => errorDiv.remove(), 500);
+    }, 3000);
+  },
+  showLoading: (element) => {
+    if (element) {
+      element.classList.add('loading');
+      element.disabled = true;
+    }
+  },
+  hideLoading: (element) => {
+    if (element) {
+      element.classList.remove('loading');
+      element.disabled = false;
+    }
+  }
+};
+
 /***************************************************************
  * Enable Editing of Portfolio Value (clientValue)
  ***************************************************************/
@@ -1268,18 +1423,87 @@ function enablePortfolioValueEdit() {
 }
 
 /***************************************************************
+ * Handle Rebalance
+ ***************************************************************/
+function doRebalance() {
+  try {
+    // Check if rebalancing is needed
+    if (!portfolioAnalytics.checkRebalancingNeeded()) {
+      document.getElementById('tradeMessage').textContent = "Portfolio is already balanced within threshold.";
+      document.getElementById('tradeMessage').className = "success";
+      return;
+    }
+    
+    // Reset proposed values
+    resetProposedValues(root);
+    
+    // For each asset, set proposed value to the difference between target and current
+    root.children.forEach(asset => {
+      if (asset.isAsset) {
+        const delta = asset.targetDollar - asset.currentDollar;
+        asset.proposedDollar = delta;
+        
+        // Distribute proposed values to children
+        distributeProposedDown(asset);
+      }
+    });
+    
+    // Re-render everything
+    renderAll();
+    
+    document.getElementById('tradeMessage').textContent = "Rebalance trades have been proposed. Review and adjust as needed.";
+    document.getElementById('tradeMessage').className = "success";
+  } catch (error) {
+    console.error('Error rebalancing portfolio:', error);
+    document.getElementById('tradeMessage').textContent = "Error rebalancing portfolio: " + error.message;
+    document.getElementById('tradeMessage').className = "error";
+  }
+}
+
+function resetProposedValues(node) {
+  node.proposedDollar = 0;
+  if (node.children && node.children.length > 0) {
+    node.children.forEach(resetProposedValues);
+  }
+}
+
+/***************************************************************
  * Startup
  ***************************************************************/
 window.addEventListener('DOMContentLoaded', () => {
+  // Initialize charts first
   initCharts();
   enablePortfolioValueEdit();
 
+  // Set up event listeners
   document.getElementById('riskSelect').addEventListener('change', onRiskChange);
+  document.getElementById('cashTargetInput').addEventListener('change', onCashTargetChange);
+  document.getElementById('cashTargetInput').addEventListener('input', onCashTargetChange);
   document.getElementById('newClientBtn').addEventListener('click', doGenerateNewClient);
   document.getElementById('resetTradesBtn').addEventListener('click', doResetTrades);
+  document.getElementById('rebalanceBtn').addEventListener('click', doRebalance);
 
-  // Initial scenario
-  onRiskChange();
+  // Initial data generation
+  generateRandomNestedData();
+  // Assign parents for bubble-up logic
+  assignParents(root, null);
+  
+  // Set initial portfolio value
+  totalPortfolioValue = 100000;
+  document.getElementById('clientValue').textContent = formatMoney(totalPortfolioValue);
+  
+  // Initialize risk profile display
+  document.getElementById('targetStocks').textContent = (userStockPct * 100).toFixed(0);
+  document.getElementById('targetBonds').textContent = (userBondPct * 100).toFixed(0);
+  document.getElementById('targetCash').textContent = (userCashPct * 100).toFixed(0);
+  
+  // Apply initial risk allocation
+  applyRiskAllocation();
+  
+  // Do initial render
+  renderAll();
+  
+  // Then generate a complete client scenario
   doGenerateNewClient();
 });
 
@@ -1303,26 +1527,70 @@ const FINANCIAL_CONSTANTS = {
 // Portfolio Analytics
 const portfolioAnalytics = {
   calculateRiskMetrics() {
-    const metrics = {
-      sharpeRatio: 0,
-      volatility: 0,
-      beta: 0,
-      correlation: 0
-    };
-    
-    // Calculate portfolio volatility
-    let totalWeight = 0;
-    let weightedVol = 0;
-    root.children.forEach(asset => {
-      if (asset.isAsset) {
-        const weight = (asset.currentDollar / totalPortfolioValue);
-        weightedVol += weight * (asset.volatility || 0);
-        totalWeight += weight;
+    try {
+      const metrics = {
+        sharpeRatio: 0,
+        volatility: 0,
+        beta: 0,
+        correlation: 0
+      };
+      
+      // Calculate portfolio volatility and expected return
+      let totalWeight = 0;
+      let weightedVol = 0;
+      let weightedReturn = 0;
+      let weightedBeta = 0;
+      
+      // Default minimum values to avoid division by zero
+      const minVol = 0.01;
+      const minReturn = 0.01;
+      
+      root.children.forEach(asset => {
+        if (asset.isAsset) {
+          // Use current dollar amount for weight calculation
+          const weight = asset.currentDollar / totalPortfolioValue;
+          
+          // Ensure reasonable defaults if values are missing
+          const assetVol = Math.max(minVol, asset.volatility || 0.05);
+          const assetReturn = Math.max(minReturn, asset.expectedReturn || 0.03);
+          const assetBeta = asset.beta || 0.5;
+          
+          weightedVol += weight * assetVol;
+          weightedReturn += weight * assetReturn;
+          weightedBeta += weight * assetBeta;
+          totalWeight += weight;
+        }
+      });
+      
+      // Normalize if weights don't sum to 1 (which they should)
+      if (totalWeight > 0 && Math.abs(totalWeight - 1) > 0.01) {
+        weightedVol /= totalWeight;
+        weightedReturn /= totalWeight;
+        weightedBeta /= totalWeight;
       }
-    });
-    metrics.volatility = weightedVol;
-    
-    return metrics;
+      
+      // Ensure minimum values
+      weightedVol = Math.max(minVol, weightedVol);
+      weightedReturn = Math.max(minReturn, weightedReturn);
+      
+      // Calculate Sharpe ratio - (portfolio return - risk free rate) / portfolio volatility
+      const riskFreeRate = FINANCIAL_CONSTANTS.RISK_FREE_RATE;
+      metrics.sharpeRatio = (weightedReturn - riskFreeRate) / weightedVol;
+      metrics.volatility = weightedVol;
+      metrics.beta = weightedBeta;
+      metrics.correlation = 0.75; // Placeholder - would normally calculate from covariance matrix
+      
+      return metrics;
+    } catch (error) {
+      console.error('Error calculating risk metrics:', error);
+      // Return default values on error
+      return {
+        sharpeRatio: 0.5,
+        volatility: 0.1,
+        beta: 1.0,
+        correlation: 0.5
+      };
+    }
   },
 
   generateCorrelationMatrix() {
@@ -1342,31 +1610,93 @@ const portfolioAnalytics = {
   },
 
   calculateCorrelation(asset1, asset2) {
-    // Implement correlation calculation based on historical returns
-    // This is a simplified version
-    return 0.5; // Placeholder
+    // In a real app, this would use historical return data
+    // For demo purposes, using pre-defined correlations
+    if (asset1.name === asset2.name) return 1.0; // Perfect correlation with self
+    
+    // Typical stock-bond correlation is negative or low
+    if ((asset1.name === "Stocks" && asset2.name === "Bonds") || 
+        (asset1.name === "Bonds" && asset2.name === "Stocks")) {
+      return -0.2;
+    }
+    
+    // Stocks and cash tend to have very low correlation
+    if ((asset1.name === "Stocks" && asset2.name === "Cash") || 
+        (asset1.name === "Cash" && asset2.name === "Stocks")) {
+      return 0.1;
+    }
+    
+    // Bonds and cash have positive but low correlation
+    if ((asset1.name === "Bonds" && asset2.name === "Cash") || 
+        (asset1.name === "Cash" && asset2.name === "Bonds")) {
+      return 0.3;
+    }
+    
+    // Default correlation for other asset pairs
+    return 0.5;
   },
 
   optimizePortfolio() {
+    // In a real app, this would use quadratic programming to optimize
+    // For this demo, we'll use a simplified approach
     const assets = root.children.filter(node => node.isAsset);
-    const returns = assets.map(asset => asset.expectedReturn || 0);
-    const risks = assets.map(asset => asset.volatility || 0);
     
-    // Implement Modern Portfolio Theory optimization
-    const optimalWeights = this.calculateOptimalWeights(returns, risks);
-    
-    // Update target allocations
-    assets.forEach((asset, index) => {
-      asset.targetDollar = optimalWeights[index] * totalPortfolioValue;
+    // Step 1: Calculate risk-adjusted returns (Sharpe ratio for each asset)
+    const riskAdjustedReturns = assets.map(asset => {
+      const vol = asset.volatility || 0.05;
+      const ret = asset.expectedReturn || 0.03;
+      const riskFreeRate = FINANCIAL_CONSTANTS.RISK_FREE_RATE;
+      return vol > 0 ? (ret - riskFreeRate) / vol : 0;
     });
     
+    // Step 2: Normalize to get weights that favor higher risk-adjusted returns
+    const sum = riskAdjustedReturns.reduce((a, b) => a + Math.max(0, b), 0);
+    let weights;
+    
+    if (sum > 0) {
+      weights = riskAdjustedReturns.map(rar => Math.max(0, rar) / sum);
+    } else {
+      // Fallback to equal weighting if all have negative risk-adjusted returns
+      weights = assets.map(() => 1 / assets.length);
+    }
+    
+    // Step 3: Reserve cash percentage
+    if (userCashPct > 0) {
+      const totalOtherWeight = 1 - userCashPct;
+      
+      // Find cash asset and set its weight
+      const cashIndex = assets.findIndex(asset => asset.name === "Cash");
+      if (cashIndex !== -1) {
+        weights[cashIndex] = userCashPct;
+        
+        // Normalize other weights to sum to (1 - cashWeight)
+        const nonCashWeightSum = weights.reduce((sum, w, i) => i !== cashIndex ? sum + w : sum, 0);
+        
+        if (nonCashWeightSum > 0) {
+          weights = weights.map((w, i) => {
+            if (i === cashIndex) return userCashPct;
+            return (w / nonCashWeightSum) * totalOtherWeight;
+          });
+        }
+      }
+    }
+    
+    // Step 4: Apply optimal weights to portfolio
+    assets.forEach((asset, index) => {
+      asset.targetDollar = weights[index] * totalPortfolioValue;
+    });
+    
+    // Update the UI to reflect the changes
+    document.getElementById('targetStocks').textContent = 
+      (weights[assets.findIndex(a => a.name === "Stocks")] * 100 || 0).toFixed(0);
+    document.getElementById('targetBonds').textContent = 
+      (weights[assets.findIndex(a => a.name === "Bonds")] * 100 || 0).toFixed(0);
+    document.getElementById('targetCash').textContent = 
+      (weights[assets.findIndex(a => a.name === "Cash")] * 100 || 0).toFixed(0);
+    
+    // Update the model and render
+    applyRiskAllocation();
     renderAll();
-  },
-
-  calculateOptimalWeights(returns, risks) {
-    // Implement MPT optimization
-    // This is a simplified version
-    return risks.map(risk => 1 / risk);
   },
 
   checkRebalancingNeeded() {
@@ -1390,59 +1720,157 @@ const portfolioAnalytics = {
 
   calculateTaxImplications() {
     let taxImpact = 0;
-    root.children.forEach(asset => {
-      if (asset.isPosition) {
-        const gain = asset.currentDollar - asset.costBasis;
-        const holdingPeriod = asset.holdingPeriod || 0;
+    
+    // Recursively process all positions
+    const processNode = (node) => {
+      if (node.isPosition) {
+        const costBasis = node.costBasis || node.currentDollar * 0.8; // Default to 80% of current value
+        const proposedSell = node.proposedDollar < 0 ? Math.abs(node.proposedDollar) : 0;
         
-        if (gain > 0) {
-          const taxRate = holdingPeriod > FINANCIAL_CONSTANTS.MIN_HOLDING_PERIOD 
-            ? FINANCIAL_CONSTANTS.TAX_RATES.longTerm 
-            : FINANCIAL_CONSTANTS.TAX_RATES.shortTerm;
-          taxImpact += gain * taxRate;
+        if (proposedSell > 0) {
+          // Calculate what portion of the sell amount is gain
+          const sellRatio = proposedSell / node.currentDollar;
+          const basisPortion = costBasis * sellRatio;
+          const gain = proposedSell - basisPortion;
+          
+          if (gain > 0) {
+            const holdingPeriod = node.holdingPeriod || 0;
+            const taxRate = holdingPeriod > FINANCIAL_CONSTANTS.MIN_HOLDING_PERIOD 
+              ? FINANCIAL_CONSTANTS.TAX_RATES.longTerm 
+              : FINANCIAL_CONSTANTS.TAX_RATES.shortTerm;
+            
+            taxImpact += gain * taxRate;
+          }
         }
+      } else if (node.children) {
+        node.children.forEach(child => processNode(child));
       }
-    });
+    };
+    
+    // Start processing from root
+    processNode(root);
     
     return taxImpact;
   },
 
   updateAnalyticsDashboard() {
-    const metrics = this.calculateRiskMetrics();
-    const taxImpact = this.calculateTaxImplications();
-    const needsRebalance = this.checkRebalancingNeeded();
-    
-    const dashboard = document.createElement('div');
-    dashboard.className = 'analytics-dashboard';
-    dashboard.innerHTML = `
-      <h3>Portfolio Analytics</h3>
-      <div class="metric">
-        <span>Volatility:</span>
-        <span>${(metrics.volatility * 100).toFixed(2)}%</span>
-      </div>
-      <div class="metric">
-        <span>Tax Impact:</span>
-        <span>${utils.formatCurrency(taxImpact)}</span>
-      </div>
-      <div class="metric">
-        <span>Rebalance Status:</span>
-        <span class="${needsRebalance ? 'needs-rebalance' : 'balanced'}">
-          ${needsRebalance ? 'Rebalance Needed' : 'Balanced'}
-        </span>
-      </div>
-    `;
-    
-    const existingDashboard = document.querySelector('.analytics-dashboard');
-    if (existingDashboard) {
-      existingDashboard.remove();
+    try {
+      const metrics = this.calculateRiskMetrics();
+      const taxImpact = this.calculateTaxImplications();
+      const needsRebalance = this.checkRebalancingNeeded();
+      
+      // Create or update dashboard
+      let dashboard = document.querySelector('.analytics-dashboard');
+      
+      if (!dashboard) {
+        dashboard = document.createElement('div');
+        dashboard.className = 'analytics-dashboard';
+        
+        // Add styles if not already in CSS
+        if (!document.getElementById('analytics-dashboard-styles')) {
+          const style = document.createElement('style');
+          style.id = 'analytics-dashboard-styles';
+          style.textContent = `
+            .analytics-dashboard {
+              background: var(--bg-container);
+              border-radius: 8px;
+              padding: 1rem;
+              margin-top: 1rem;
+              box-shadow: var(--shadow-sm);
+            }
+            .analytics-dashboard h3 {
+              margin-top: 0;
+              color: var(--text-color);
+              font-size: 1.1rem;
+              border-bottom: 1px solid var(--border-color);
+              padding-bottom: 0.5rem;
+            }
+            .metric {
+              display: flex;
+              justify-content: space-between;
+              margin-bottom: 0.5rem;
+              font-size: 0.9rem;
+            }
+            .needs-rebalance {
+              color: var(--danger-color);
+              font-weight: bold;
+            }
+            .balanced {
+              color: var(--success-color);
+              font-weight: bold;
+            }
+          `;
+          document.head.appendChild(style);
+        }
+      }
+      
+      // Calculate expected return: sharpe ratio * volatility + risk-free rate
+      const expectedReturn = (metrics.volatility * metrics.sharpeRatio + FINANCIAL_CONSTANTS.RISK_FREE_RATE) * 100;
+      
+      dashboard.innerHTML = `
+        <h3><i class="fas fa-chart-line"></i> Portfolio Analytics</h3>
+        <div class="metric">
+          <span>Expected Return:</span>
+          <span>${expectedReturn.toFixed(2)}%</span>
+        </div>
+        <div class="metric">
+          <span>Volatility:</span>
+          <span>${(metrics.volatility * 100).toFixed(2)}%</span>
+        </div>
+        <div class="metric">
+          <span>Sharpe Ratio:</span>
+          <span>${metrics.sharpeRatio.toFixed(2)}</span>
+        </div>
+        <div class="metric">
+          <span>Beta:</span>
+          <span>${metrics.beta.toFixed(2)}</span>
+        </div>
+        <div class="metric">
+          <span>Tax Impact:</span>
+          <span>$${taxImpact.toFixed(2)}</span>
+        </div>
+        <div class="metric">
+          <span>Rebalance Status:</span>
+          <span class="${needsRebalance ? 'needs-rebalance' : 'balanced'}">
+            ${needsRebalance ? 'Rebalance Needed' : 'Balanced'}
+          </span>
+        </div>
+      `;
+      
+      // Add to DOM if new
+      if (!dashboard.parentNode) {
+        const section = document.querySelector('.section');
+        if (section) {
+          section.appendChild(dashboard);
+        }
+      }
+    } catch (error) {
+      console.error('Error updating analytics dashboard:', error);
     }
-    document.querySelector('.section').appendChild(dashboard);
   }
 };
 
 // Constants and configuration
 const CONFIG = {
-  // ... existing CONFIG ...
+  MIN_PORTFOLIO_VALUE: 1000,
+  MAX_PORTFOLIO_VALUE: 1000000000,
+  MIN_CASH_TARGET: 0,
+  MAX_CASH_TARGET: 100,
+  CHART_COLORS: {
+    primary: '#007bff',
+    success: '#28a745',
+    danger: '#dc3545',
+    warning: '#ffc107',
+    info: '#17a2b8'
+  },
+  CHART_OPTIONS: {
+    responsive: true,
+    maintainAspectRatio: false,
+    animation: {
+      duration: 750,
+      easing: 'easeInOutQuart'
+    }
+  }
 };
 
 // Chart management
