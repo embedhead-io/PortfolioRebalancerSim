@@ -194,21 +194,26 @@
     }
     /* 13 columns: Name + 6 for dollars + 6 for percents */
     thead th:nth-child(1)  { width: 14%; text-align: left; }
-    thead th:nth-child(2)  { width: 7%; }
-    thead th:nth-child(3)  { width: 7%; }
-    thead th:nth-child(4)  { width: 7%; }
-    thead th:nth-child(5)  { width: 7%; }
-    thead th:nth-child(6)  { width: 7%; }
-    thead th:nth-child(7)  { width: 7%; }
-    thead th:nth-child(8)  { width: 6%; }
-    thead th:nth-child(9)  { width: 6%; }
-    thead th:nth-child(10) { width: 6%; }
-    thead th:nth-child(11) { width: 6%; }
-    thead th:nth-child(12) { width: 6%; }
-    thead th:nth-child(13) { width: 6%; }
+    thead th:nth-child(2)  { width: 7%; text-align: right; }
+    thead th:nth-child(3)  { width: 7%; text-align: right; }
+    thead th:nth-child(4)  { width: 7%; text-align: right; }
+    thead th:nth-child(5)  { width: 7%; text-align: right; }
+    thead th:nth-child(6)  { width: 7%; text-align: right; }
+    thead th:nth-child(7)  { width: 7%; text-align: right; }
+    thead th:nth-child(8)  { width: 6%; text-align: right; }
+    thead th:nth-child(9)  { width: 6%; text-align: right; }
+    thead th:nth-child(10) { width: 6%; text-align: right; }
+    thead th:nth-child(11) { width: 6%; text-align: right; }
+    thead th:nth-child(12) { width: 6%; text-align: right; }
+    thead th:nth-child(13) { width: 6%; text-align: right; }
 
     th:first-child, td:first-child {
       text-align: left; 
+    }
+
+    /* Ensure all numeric cells are properly right-aligned */
+    th:not(:first-child), td:not(:first-child) {
+      text-align: right !important;
     }
 
     /* Make the monetary value cells wider to display full amounts */
