@@ -680,9 +680,12 @@ function roundTo100(x) {
  ***************************************************************/
 function aggregateNode(node) {
   if (!node.children || node.children.length === 0) {
+    // For leaf nodes, total = current + proposed
     node.totalDollar = (node.currentDollar || 0) + (node.proposedDollar || 0);
     return;
   }
+  
+  // For parent nodes, sum up values from children
   let c = 0, t = 0, p = 0, tot = 0;
   node.children.forEach(ch => {
     aggregateNode(ch);
@@ -691,6 +694,7 @@ function aggregateNode(node) {
     p   += ch.proposedDollar  || 0;
     tot += ch.totalDollar     || 0;
   });
+  
   node.currentDollar   = c;
   node.targetDollar    = t;
   node.proposedDollar  = p;
@@ -718,12 +722,26 @@ function computePercentages(node, rootRef) {
  ***************************************************************/
 function distributeProposedDown(node) {
   if (!node.children || node.children.length === 0) return;
+  
+  // Get the sum of current dollars for all children
   let sumCur = node.children.reduce((acc, ch) => acc + (ch.currentDollar || 0), 0);
   if (sumCur < 1) sumCur = 1;
+  
+  // Log the distribution process for debugging
+  console.log(`Distributing ${node.proposedDollar} for ${node.name} among ${node.children.length} children`);
+  
+  // Distribute proposed dollars to children based on their current proportion
   node.children.forEach(ch => {
+    // Calculate the ratio of this child's current value to the total
     let ratio = (ch.currentDollar || 0) / sumCur;
+    
+    // Apply the same ratio to the proposed value
     ch.proposedDollar = ratio * node.proposedDollar;
-    distributeProposedDown(ch); // recurse deeper
+    
+    console.log(`  Child ${ch.name}: Current $${ch.currentDollar}, Ratio ${ratio.toFixed(4)}, Proposed $${ch.proposedDollar.toFixed(2)}`);
+    
+    // Recursively distribute to this child's children if any
+    distributeProposedDown(ch);
   });
 }
 
@@ -988,6 +1006,9 @@ function renderAll() {
     
     // Step 2: Compute percentages
     computePercentages(root, root);
+    
+    // Update total portfolio value display
+    document.getElementById('clientValue').textContent = formatMoney(totalPortfolioValue);
     
     // Step 3: Render the table
     renderTable();
@@ -1446,8 +1467,11 @@ function doRebalance() {
     // For each asset, set proposed value to the difference between target and current
     root.children.forEach(asset => {
       if (asset.isAsset) {
+        // Calculate the exact delta needed to reach target
         const delta = asset.targetDollar - asset.currentDollar;
         asset.proposedDollar = delta;
+        
+        console.log(`Rebalancing ${asset.name}: Current $${asset.currentDollar}, Target $${asset.targetDollar}, Delta $${delta}`);
         
         // Distribute proposed values to children
         if (asset.children && asset.children.length > 0) {
@@ -1459,7 +1483,7 @@ function doRebalance() {
     // Re-render everything
     renderAll();
     
-    document.getElementById('tradeMessage').textContent = "Rebalance trades have been proposed. Review and adjust as needed.";
+    document.getElementById('tradeMessage').textContent = "Rebalance trades have been proposed. Review trades above to bring your portfolio to the target allocation.";
     document.getElementById('tradeMessage').className = "success";
   } catch (error) {
     console.error('Error rebalancing portfolio:', error);
@@ -1726,7 +1750,8 @@ const portfolioAnalytics = {
       }
     });
     
-    return needsRebalance;
+    // Always return true to allow rebalancing anytime the button is clicked
+    return true;
   },
 
   calculateTaxImplications() {
@@ -2208,6 +2233,8 @@ const eventHandlers = {
 
   setupRebalanceButton() {
     const rebalanceBtn = document.getElementById('rebalanceBtn');
+    // Remove the conflicting event handler to prevent double-triggering
+    /* 
     rebalanceBtn.addEventListener('click', () => {
       if (portfolioAnalytics.checkRebalancingNeeded()) {
         utils.showLoading(rebalanceBtn);
@@ -2219,6 +2246,7 @@ const eventHandlers = {
         utils.showError('Portfolio is already balanced');
       }
     });
+    */
   },
 
   setupResetButton() {
