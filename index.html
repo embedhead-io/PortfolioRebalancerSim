@@ -188,26 +188,30 @@
       border-bottom: 1px solid #eee;
       vertical-align: middle;
       text-align: right;  
-      overflow: hidden;  
       white-space: nowrap;
       font-size: 0.85rem;
-      text-overflow: ellipsis;
+      overflow: visible;  /* Changed from hidden to visible */
     }
     /* 11 columns: Name + 5 for dollars + 5 for percents */
-    thead th:nth-child(1)  { width: 14%; text-align: left; }
-    thead th:nth-child(2)  { width: 8%; }
-    thead th:nth-child(3)  { width: 8%; }
-    thead th:nth-child(4)  { width: 8%; }
-    thead th:nth-child(5)  { width: 8%; }
-    thead th:nth-child(6)  { width: 8%; }
-    thead th:nth-child(7)  { width: 8%; }
-    thead th:nth-child(8)  { width: 8%; }
+    thead th:nth-child(1)  { width: 16%; text-align: left; }
+    thead th:nth-child(2)  { width: 9%; }
+    thead th:nth-child(3)  { width: 9%; }
+    thead th:nth-child(4)  { width: 9%; }
+    thead th:nth-child(5)  { width: 9%; }
+    thead th:nth-child(6)  { width: 9%; }
+    thead th:nth-child(7)  { width: 7%; }
+    thead th:nth-child(8)  { width: 7%; }
     thead th:nth-child(9)  { width: 8%; }
     thead th:nth-child(10) { width: 8%; }
     thead th:nth-child(11) { width: 8%; }
 
     th:first-child, td:first-child {
       text-align: left; 
+    }
+
+    /* Make the monetary value cells wider to display full amounts */
+    td:nth-child(2), td:nth-child(3), td:nth-child(4), td:nth-child(5), td:nth-child(6) {
+      min-width: 85px;
     }
 
     .asset-col {
@@ -388,6 +392,11 @@
       .charts-container {
         grid-template-columns: 1fr;
       }
+      table {
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+      }
     }
     @media (max-width: 768px) {
       .container {
@@ -397,11 +406,6 @@
         width: 100%;
         margin: 0.5rem 0;
         justify-content: center;
-      }
-      table {
-        display: block;
-        overflow-x: auto;
-        white-space: nowrap;
       }
     }
 
@@ -1294,6 +1298,15 @@ function updateCharts() {
  * Utility Functions
  ***************************************************************/
 function formatMoney(x) {
+  // Handle very large numbers (prevents truncation)
+  if (Math.abs(x) >= 1000000) {
+    return new Intl.NumberFormat('en-US', {
+      style: 'decimal',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(x);
+  }
+  
   return new Intl.NumberFormat('en-US', {
     style: 'decimal',
     minimumFractionDigits: 2,
@@ -1427,13 +1440,6 @@ function enablePortfolioValueEdit() {
  ***************************************************************/
 function doRebalance() {
   try {
-    // Check if rebalancing is needed
-    if (!portfolioAnalytics.checkRebalancingNeeded()) {
-      document.getElementById('tradeMessage').textContent = "Portfolio is already balanced within threshold.";
-      document.getElementById('tradeMessage').className = "success";
-      return;
-    }
-    
     // Reset proposed values
     resetProposedValues(root);
     
@@ -1444,7 +1450,9 @@ function doRebalance() {
         asset.proposedDollar = delta;
         
         // Distribute proposed values to children
-        distributeProposedDown(asset);
+        if (asset.children && asset.children.length > 0) {
+          distributeProposedDown(asset);
+        }
       }
     });
     
@@ -1700,14 +1708,17 @@ const portfolioAnalytics = {
   },
 
   checkRebalancingNeeded() {
-    const threshold = FINANCIAL_CONSTANTS.REBALANCING_THRESHOLDS[document.getElementById('riskSelect').value];
+    const threshold = FINANCIAL_CONSTANTS.REBALANCING_THRESHOLDS[document.getElementById('riskSelect').value] || 0.1;
     let needsRebalance = false;
     
     root.children.forEach(asset => {
       if (asset.isAsset) {
+        // Check deviation using totalPortfolioValue to ensure correct percentage calculation
         const currentWeight = asset.currentDollar / totalPortfolioValue;
         const targetWeight = asset.targetDollar / totalPortfolioValue;
         const deviation = Math.abs(currentWeight - targetWeight);
+        
+        console.log(`Asset: ${asset.name}, Current: ${currentWeight.toFixed(4)}, Target: ${targetWeight.toFixed(4)}, Deviation: ${deviation.toFixed(4)}, Threshold: ${threshold}`);
         
         if (deviation > threshold) {
           needsRebalance = true;
