@@ -1133,31 +1133,36 @@ function distributeTargets(node) {
  * SHIFTING RISK on <select>
  ***************************************************************/
 function onRiskChange() {
-  let val = document.getElementById('riskSelect').value;
+  const val = document.getElementById('riskSelect').value;
   if (val === "conservative") {
     userStockPct = 0.3; userBondPct = 0.5; userCashPct = 0.2;
   } else if (val === "aggressive") {
     userStockPct = 0.7; userBondPct = 0.2; userCashPct = 0.1;
   } else {
+    // moderate
     userStockPct = 0.5; userBondPct = 0.4; userCashPct = 0.1;
   }
-  
-  // Update cash target input to match
+
+  // Update the numeric Cash Target input
   document.getElementById('cashTargetInput').value = (userCashPct * 100).toFixed(0);
 
-  // Update target percentage display
+  // Update the displayed target percentages
   document.getElementById('targetStocks').textContent = (userStockPct * 100).toFixed(0);
   document.getElementById('targetBonds').textContent  = (userBondPct * 100).toFixed(0);
   document.getElementById('targetCash').textContent   = (userCashPct * 100).toFixed(0);
 
-  // Reset proposed trades when changing risk profile
+  // 1) Clear out any old proposed trades
   resetProposedValues(root);
-  
-  // Apply new risk allocation
+
+  // 2) Apply new risk-based targets
   applyRiskAllocation();
+
+  // 3) Redraw everything
   renderAll();
-  
-  document.getElementById('tradeMessage').textContent = `Risk profile changed to ${val}. Use Rebalance to generate trades.`;
+
+  // Display a user message
+  document.getElementById('tradeMessage').textContent = 
+    `Risk profile changed to ${val.toUpperCase()}. Target allocations updated; Proposed trades cleared.`;
   document.getElementById('tradeMessage').className = "success";
 }
 
@@ -1200,47 +1205,52 @@ function onCashTargetChange() {
  * Generating & Scaling to Match Portfolio Value
  ***************************************************************/
 function doGenerateNewClient() {
+  // Pick a random name
   const names = ["John Smith","Jane Doe","Alex Johnson","Maria Garcia","Lee Wong"];
-  let n = names[Math.floor(Math.random() * names.length)];
-  clientName = n;
-  document.getElementById('clientName').textContent = n;
+  clientName = names[Math.floor(Math.random() * names.length)];
+  document.getElementById('clientName').textContent = clientName;
 
-  let val = 80000 + Math.random() * 40000;
-  val = Math.round(val / 100) * 100;
+  // Random total portfolio size
+  const val = Math.round((80000 + Math.random() * 40000) / 100) * 100;
   totalPortfolioValue = val;
   document.getElementById('clientValue').textContent = formatMoney(val);
 
-  // Generate random cash target between 0% and 20%
-  const randomCashPct = Math.round(Math.random() * 20);
-  document.getElementById('cashTargetInput').value = randomCashPct;
-  userCashPct = randomCashPct / 100;
-
+  // Generate random data structure
   generateRandomNestedData();
-  // assign parents for bubble-up logic
   assignParents(root, null);
 
+  // Scale the random data so that sum of currentDollar = totalPortfolioValue
   aggregateNode(root);
-  let sumCur = root.currentDollar || 1;
-  let ratio  = totalPortfolioValue / sumCur;
+  const sumCur = root.currentDollar || 1;
+  const ratio  = totalPortfolioValue / sumCur;
   scaleNode(root, ratio);
-  
-  // Make sure we start with no proposed trades
+
+  // Randomly pick a new cash % between 0% and 20%
+  const randomCashPct = Math.round(Math.random() * 20);
+  userCashPct = randomCashPct / 100;
+  document.getElementById('cashTargetInput').value = randomCashPct;
+
+  // The rest of the stock/bond % we keep the same ratio as before for demonstration
+  // Or you can forcibly pick a new risk profile (optional)...
+
+  // Clear any leftover proposed trades
   resetProposedValues(root);
-  
-  // Re-aggregate to ensure all values are properly set
+
+  // Re-run aggregation
   aggregateNode(root);
 
-  // Save original data for reset functionality
+  // Optionally store a copy of data for reference
   originalData = JSON.parse(JSON.stringify(root));
   originalPortfolioValue = val;
 
-  // Apply the risk allocation based on current profile
+  // Recompute new risk-based targets for Stocks/Bonds/Cash
   applyRiskAllocation();
-  
-  // Re-render everything
+
+  // Finally, redraw the table & charts
   renderAll();
-  
-  document.getElementById('tradeMessage').textContent = "New client portfolio generated.";
+
+  document.getElementById('tradeMessage').textContent = 
+    "New client generated. Proposed trades cleared. Adjust risk or click Rebalance to propose new trades.";
   document.getElementById('tradeMessage').className = "success";
 }
 
@@ -1251,31 +1261,6 @@ function scaleNode(node, ratio) {
     return;
   }
   node.children.forEach(ch => scaleNode(ch, ratio));
-}
-
-function doResetTrades() {
-  if (originalData) {
-    // Properly reset by clearing all proposed values
-    resetProposedValues(root);
-    
-    // Make sure any total values are updated
-    aggregateNode(root);
-    
-    // Re-render the table and update charts
-    renderAll();
-    
-    document.getElementById('tradeMessage').textContent = "All proposed trades have been reset.";
-    document.getElementById('tradeMessage').className = "success";
-    
-    // Update dashboard to show correct rebalance status
-    setTimeout(() => {
-      try {
-        portfolioAnalytics.updateAnalyticsDashboard();
-      } catch (e) {
-        console.error("Error updating analytics dashboard after reset:", e);
-      }
-    }, 100);
-  }
 }
 
 /***************************************************************
@@ -1565,65 +1550,103 @@ function enablePortfolioValueEdit() {
  ***************************************************************/
 function doRebalance() {
   try {
-    // Reset proposed values
+    // Step 1: Clear any existing proposed trades
     resetProposedValues(root);
     
-    // For each asset, set proposed value to the difference between target and current
+    // Step 2: Check if rebalancing is needed (for informational purposes only)
+    const needsRebalance = portfolioAnalytics.checkRebalancingNeeded();
+    
+    // Step 3: Calculate proposed trades to bring current values to target values
     root.children.forEach(asset => {
       if (asset.isAsset) {
-        // Calculate the exact delta needed to reach target
+        // Calculate exact delta needed (difference between target and current)
         const delta = asset.targetDollar - asset.currentDollar;
+        
+        // Set proposed value to this delta (positive = buy, negative = sell)
         asset.proposedDollar = delta;
         
-        console.log(`Rebalancing ${asset.name}: Current $${asset.currentDollar}, Target $${asset.targetDollar}, Delta $${delta}`);
+        // Log for debugging
+        console.log(`Rebalancing ${asset.name}: Current $${asset.currentDollar.toFixed(2)}, Target $${asset.targetDollar.toFixed(2)}, Delta $${delta.toFixed(2)}`);
         
-        // Distribute proposed values to children
+        // Distribute proposed values to children proportionally
         if (asset.children && asset.children.length > 0) {
           distributeProposedDown(asset);
         }
       }
     });
     
-    // Re-render everything
+    // Step 4: Update aggregates and percentages
+    aggregateNode(root);
+    computePercentages(root, root);
+    
+    // Step 5: Redraw table and charts
     renderAll();
     
-    document.getElementById('tradeMessage').textContent = "Rebalance trades have been proposed. Review trades above to bring your portfolio to the target allocation.";
+    // Step 6: Update status message to user
+    let message;
+    if (needsRebalance) {
+      message = "Rebalance trades have been proposed to reach target allocation. Review and adjust as needed.";
+    } else {
+      message = "Portfolio is already close to target allocation, but trades have been proposed for perfect alignment.";
+    }
+    
+    document.getElementById('tradeMessage').textContent = message;
     document.getElementById('tradeMessage').className = "success";
     
-    // Force update the analytics dashboard to show the correct rebalance status
+    // Force update of analytics dashboard rebalance status
     setTimeout(() => {
       try {
-        // Update the rebalance status after trades have been applied
-        const statusElement = document.querySelector('.analytics-dashboard .needs-rebalance, .analytics-dashboard .balanced');
-        if (statusElement) {
-          statusElement.textContent = "Balanced";
-          statusElement.className = "balanced";
-        }
+        portfolioAnalytics.updateAnalyticsDashboard();
       } catch (e) {
-        console.error("Error updating rebalance status:", e);
+        console.error("Error updating analytics dashboard:", e);
       }
     }, 100);
   } catch (error) {
-    console.error('Error rebalancing portfolio:', error);
-    document.getElementById('tradeMessage').textContent = "Error rebalancing portfolio: " + error.message;
+    // Handle any errors
+    console.error('Error during rebalance:', error);
+    document.getElementById('tradeMessage').textContent = "Error generating rebalance trades: " + error.message;
     document.getElementById('tradeMessage').className = "error";
   }
 }
 
+/***************************************************************
+ * Reset the Proposed($) values (clears trades) for every node
+ ***************************************************************/
 function resetProposedValues(node) {
-  // Set proposed dollar value to zero
   node.proposedDollar = 0;
   node.proposedPct = 0;
-  
-  // Make sure total value equals current value when proposed is zero
-  if (!node.children || node.children.length === 0) {
-    node.totalDollar = node.currentDollar || 0;
-  }
-  
-  // Recursively reset children
+
+  // Reset child nodes recursively
   if (node.children && node.children.length > 0) {
     node.children.forEach(child => resetProposedValues(child));
   }
+
+  // Recompute totalDollar for leaf nodes after clearing proposed
+  // so total = current + proposed = current + 0 = current
+  if (!node.children || node.children.length === 0) {
+    node.totalDollar = node.currentDollar || 0;
+  }
+}
+
+/***************************************************************
+ * Called when user clicks "Reset Trades" button
+ ***************************************************************/
+function doResetTrades() {
+  // Only reset if we have a valid portfolio loaded
+  if (!root || !root.children) return;
+
+  // Clear proposed trades
+  resetProposedValues(root);
+
+  // Re-aggregate to ensure totals are correct
+  aggregateNode(root);
+
+  // Redraw
+  renderAll();
+
+  // Show user message
+  document.getElementById('tradeMessage').textContent = "All proposed trades have been reset to $0.";
+  document.getElementById('tradeMessage').className = "success";
 }
 
 /***************************************************************
@@ -1872,27 +1895,55 @@ const portfolioAnalytics = {
     const threshold = FINANCIAL_CONSTANTS.REBALANCING_THRESHOLDS[document.getElementById('riskSelect').value] || 0.1;
     let needsRebalance = false;
     
-    // If there are any proposed trades, we consider the portfolio "balanced"
-    // because the user has already seen and can apply the needed trades
-    const hasProposedTrades = root.proposedDollar !== 0;
-    if (hasProposedTrades) {
-      return false;
-    }
+    // Check if there are any proposed trades - if so, consider them when determining if rebalance is needed
+    const hasProposedTrades = Math.abs(root.proposedDollar || 0) > 0.01;
     
+    // If any asset class deviation exceeds threshold, rebalance is needed
     root.children.forEach(asset => {
       if (asset.isAsset) {
-        // Check deviation using totalPortfolioValue to ensure correct percentage calculation
+        // Get current weight (current dollars / total portfolio value)
         const currentWeight = asset.currentDollar / totalPortfolioValue;
+        
+        // Get target weight (target dollars / total portfolio value)
         const targetWeight = asset.targetDollar / totalPortfolioValue;
+        
+        // Calculate absolute deviation
         const deviation = Math.abs(currentWeight - targetWeight);
         
-        console.log(`Asset: ${asset.name}, Current: ${currentWeight.toFixed(4)}, Target: ${targetWeight.toFixed(4)}, Deviation: ${deviation.toFixed(4)}, Threshold: ${threshold}`);
+        // Log for debugging
+        console.log(`Asset: ${asset.name}, Current: ${(currentWeight*100).toFixed(2)}%, Target: ${(targetWeight*100).toFixed(2)}%, Deviation: ${(deviation*100).toFixed(2)}%, Threshold: ${(threshold*100).toFixed(2)}%`);
         
+        // Check if deviation exceeds threshold
         if (deviation > threshold) {
           needsRebalance = true;
         }
       }
     });
+    
+    // If we have proposed trades that would fix the balance issues, don't show "needs rebalance"
+    if (hasProposedTrades) {
+      // Check if post-trade (total) values would be within tolerance
+      let stillNeedsRebalance = false;
+      
+      root.children.forEach(asset => {
+        if (asset.isAsset) {
+          const totalWeight = asset.totalDollar / totalPortfolioValue;
+          const targetWeight = asset.targetDollar / totalPortfolioValue;
+          const postTradeDeviation = Math.abs(totalWeight - targetWeight);
+          
+          console.log(`Post-Trade: ${asset.name}, Total: ${(totalWeight*100).toFixed(2)}%, Target: ${(targetWeight*100).toFixed(2)}%, Deviation: ${(postTradeDeviation*100).toFixed(2)}%, Threshold: ${(threshold*100).toFixed(2)}%`);
+          
+          if (postTradeDeviation > threshold) {
+            stillNeedsRebalance = true;
+          }
+        }
+      });
+      
+      // If the proposed trades fix the balance issues, don't show "needs rebalance"
+      if (!stillNeedsRebalance) {
+        return false;
+      }
+    }
     
     return needsRebalance;
   },
