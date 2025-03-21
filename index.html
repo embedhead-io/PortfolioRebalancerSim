@@ -651,7 +651,9 @@ function generateRandomNestedData() {
   bonds.children.push(makePosition("Gov Bond B", 0.03, 0.03, 0.1));
 
   cash.currentDollar = roundTo100(3000 + Math.random() * 2000);
-  cash.targetDollar  = 0; 
+  cash.targetDollar  = 0;
+  cash.proposedDollar = 0;
+  cash.totalDollar = cash.currentDollar;
 
   root.children.push(stocks, bonds, cash);
 }
@@ -1082,32 +1084,47 @@ function renderAll() {
  * Distributing Risk (Top-Down)
  ***************************************************************/
 function applyRiskAllocation() {
+  // Calculate target values for each asset class based on risk profile
   let tVal = totalPortfolioValue;
   let stocksVal = userStockPct * tVal;
   let bondsVal  = userBondPct  * tVal;
   let cashVal   = userCashPct  * tVal;
 
+  console.log(`Applying risk allocation: Stocks=${stocksVal} (${userStockPct*100}%), Bonds=${bondsVal} (${userBondPct*100}%), Cash=${cashVal} (${userCashPct*100}%)`);
+
+  // Assign target values to asset classes
   root.children.forEach(ch => {
-    if (/stock/i.test(ch.name)) {
+    if (ch.name.toLowerCase() === "stocks") {
       ch.targetDollar = stocksVal;
-    } else if (/bond/i.test(ch.name)) {
+    } else if (ch.name.toLowerCase() === "bonds") {
       ch.targetDollar = bondsVal;
-    } else if (/cash/i.test(ch.name)) {
+    } else if (ch.name.toLowerCase() === "cash") {
       ch.targetDollar = cashVal;
     } else {
+      console.warn(`Unknown asset class: ${ch.name}`);
       ch.targetDollar = 0; 
     }
   });
+  
+  // Distribute target values to children
   root.children.forEach(ch => distributeTargets(ch));
+  
+  // Recalculate and update everything
+  aggregateNode(root);
+  computePercentages(root, root);
 }
 
 function distributeTargets(node) {
   if (!node.children || node.children.length === 0) return;
+  
+  // Get total of current values for children
   let totalCur = node.children.reduce((acc, c) => acc + (c.currentDollar || 0), 0);
-  if (totalCur < 1) totalCur = 1; 
+  if (totalCur < 1) totalCur = 1;
+  
+  // Distribute target values proportionally based on current values
   node.children.forEach(ch => {
     let ratio = (ch.currentDollar || 0) / totalCur;
-    ch.targetDollar = node.targetDollar * ratio;
+    ch.targetDollar = Math.round(node.targetDollar * ratio);
     distributeTargets(ch);
   });
 }
@@ -1124,14 +1141,24 @@ function onRiskChange() {
   } else {
     userStockPct = 0.5; userBondPct = 0.4; userCashPct = 0.1;
   }
+  
+  // Update cash target input to match
   document.getElementById('cashTargetInput').value = (userCashPct * 100).toFixed(0);
 
+  // Update target percentage display
   document.getElementById('targetStocks').textContent = (userStockPct * 100).toFixed(0);
   document.getElementById('targetBonds').textContent  = (userBondPct * 100).toFixed(0);
   document.getElementById('targetCash').textContent   = (userCashPct * 100).toFixed(0);
 
+  // Reset proposed trades when changing risk profile
+  resetProposedValues(root);
+  
+  // Apply new risk allocation
   applyRiskAllocation();
   renderAll();
+  
+  document.getElementById('tradeMessage').textContent = `Risk profile changed to ${val}. Use Rebalance to generate trades.`;
+  document.getElementById('tradeMessage').className = "success";
 }
 
 /***************************************************************
@@ -1196,15 +1223,21 @@ function doGenerateNewClient() {
   let sumCur = root.currentDollar || 1;
   let ratio  = totalPortfolioValue / sumCur;
   scaleNode(root, ratio);
+  
+  // Make sure we start with no proposed trades
+  resetProposedValues(root);
+  
+  // Re-aggregate to ensure all values are properly set
   aggregateNode(root);
 
-  // Reset any proposed values
-  resetProposedValues(root);
-
+  // Save original data for reset functionality
   originalData = JSON.parse(JSON.stringify(root));
   originalPortfolioValue = val;
 
+  // Apply the risk allocation based on current profile
   applyRiskAllocation();
+  
+  // Re-render everything
   renderAll();
   
   document.getElementById('tradeMessage').textContent = "New client portfolio generated.";
@@ -1222,10 +1255,26 @@ function scaleNode(node, ratio) {
 
 function doResetTrades() {
   if (originalData) {
+    // Properly reset by clearing all proposed values
     resetProposedValues(root);
+    
+    // Make sure any total values are updated
+    aggregateNode(root);
+    
+    // Re-render the table and update charts
     renderAll();
+    
     document.getElementById('tradeMessage').textContent = "All proposed trades have been reset.";
     document.getElementById('tradeMessage').className = "success";
+    
+    // Update dashboard to show correct rebalance status
+    setTimeout(() => {
+      try {
+        portfolioAnalytics.updateAnalyticsDashboard();
+      } catch (e) {
+        console.error("Error updating analytics dashboard after reset:", e);
+      }
+    }, 100);
   }
 }
 
@@ -1540,6 +1589,20 @@ function doRebalance() {
     
     document.getElementById('tradeMessage').textContent = "Rebalance trades have been proposed. Review trades above to bring your portfolio to the target allocation.";
     document.getElementById('tradeMessage').className = "success";
+    
+    // Force update the analytics dashboard to show the correct rebalance status
+    setTimeout(() => {
+      try {
+        // Update the rebalance status after trades have been applied
+        const statusElement = document.querySelector('.analytics-dashboard .needs-rebalance, .analytics-dashboard .balanced');
+        if (statusElement) {
+          statusElement.textContent = "Balanced";
+          statusElement.className = "balanced";
+        }
+      } catch (e) {
+        console.error("Error updating rebalance status:", e);
+      }
+    }, 100);
   } catch (error) {
     console.error('Error rebalancing portfolio:', error);
     document.getElementById('tradeMessage').textContent = "Error rebalancing portfolio: " + error.message;
@@ -1548,9 +1611,18 @@ function doRebalance() {
 }
 
 function resetProposedValues(node) {
+  // Set proposed dollar value to zero
   node.proposedDollar = 0;
+  node.proposedPct = 0;
+  
+  // Make sure total value equals current value when proposed is zero
+  if (!node.children || node.children.length === 0) {
+    node.totalDollar = node.currentDollar || 0;
+  }
+  
+  // Recursively reset children
   if (node.children && node.children.length > 0) {
-    node.children.forEach(resetProposedValues);
+    node.children.forEach(child => resetProposedValues(child));
   }
 }
 
@@ -1800,6 +1872,13 @@ const portfolioAnalytics = {
     const threshold = FINANCIAL_CONSTANTS.REBALANCING_THRESHOLDS[document.getElementById('riskSelect').value] || 0.1;
     let needsRebalance = false;
     
+    // If there are any proposed trades, we consider the portfolio "balanced"
+    // because the user has already seen and can apply the needed trades
+    const hasProposedTrades = root.proposedDollar !== 0;
+    if (hasProposedTrades) {
+      return false;
+    }
+    
     root.children.forEach(asset => {
       if (asset.isAsset) {
         // Check deviation using totalPortfolioValue to ensure correct percentage calculation
@@ -1815,8 +1894,7 @@ const portfolioAnalytics = {
       }
     });
     
-    // Always return true to allow rebalancing anytime the button is clicked
-    return true;
+    return needsRebalance;
   },
 
   calculateTaxImplications() {
