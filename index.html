@@ -170,55 +170,57 @@
     /* Table & expansions */
     table {
       width: 100%;
-      table-layout: fixed; 
       border-collapse: collapse;
       margin: 0.5rem 0;
       transition: background 0.3s, color 0.3s;
     }
+
     thead th {
       background: var(--header-footer-bg);
+      padding: 0.5rem 0.75rem;
       font-size: 0.75rem;
       font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 0.02em;
-      padding: 0.5rem 0.3rem;
+      border-bottom: 2px solid var(--border-color);
     }
+
+    /* First column is left-aligned */
+    th:first-child,
+    td:first-child {
+      text-align: left;
+    }
+
+    /* All other columns => right-aligned + tabular numbers */
+    th:not(:first-child),
+    td:not(:first-child) {
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+
     th, td {
-      padding: 0.3rem 0.3rem;
+      padding: 0.5rem 0.75rem;
       border-bottom: 1px solid #eee;
-      vertical-align: middle;
-      text-align: right;  
       white-space: nowrap;
       font-size: 0.85rem;
-      overflow: visible;  /* Changed from hidden to visible */
-    }
-    /* 13 columns: Name + 6 for dollars + 6 for percents */
-    thead th:nth-child(1)  { width: 14%; text-align: left; }
-    thead th:nth-child(2)  { width: 7%; text-align: right; }
-    thead th:nth-child(3)  { width: 7%; text-align: right; }
-    thead th:nth-child(4)  { width: 7%; text-align: right; }
-    thead th:nth-child(5)  { width: 7%; text-align: right; }
-    thead th:nth-child(6)  { width: 7%; text-align: right; }
-    thead th:nth-child(7)  { width: 7%; text-align: right; }
-    thead th:nth-child(8)  { width: 6%; text-align: right; }
-    thead th:nth-child(9)  { width: 6%; text-align: right; }
-    thead th:nth-child(10) { width: 6%; text-align: right; }
-    thead th:nth-child(11) { width: 6%; text-align: right; }
-    thead th:nth-child(12) { width: 6%; text-align: right; }
-    thead th:nth-child(13) { width: 6%; text-align: right; }
-
-    th:first-child, td:first-child {
-      text-align: left; 
+      vertical-align: middle;
     }
 
-    /* Ensure all numeric cells are properly right-aligned */
-    th:not(:first-child), td:not(:first-child) {
-      text-align: right !important;
+    /* Subtotal row or group row styling */
+    .subtotal-row td {
+      font-weight: bold;
+      background: #f0f0f0;
     }
 
-    /* Make the monetary value cells wider to display full amounts */
-    td:nth-child(2), td:nth-child(3), td:nth-child(4), td:nth-child(5), td:nth-child(6) {
-      min-width: 85px;
+    /* 'total-row' styling at the bottom */
+    .total-row {
+      background: var(--header-footer-bg);
+      font-weight: bold;
+    }
+
+    .total-row td {
+      border-top: 2px solid #ccc;
+      padding: 0.75rem;
     }
 
     .asset-col {
@@ -226,6 +228,7 @@
       font-weight: bold;
       transition: background 0.3s;
     }
+
     .proposed-col {
       border: 1px dotted var(--proposed-col-border);
       background: #fafafa;
@@ -244,16 +247,6 @@
       font-weight: bold; 
     }
 
-    /* Delta => negative => red, positive => green, zero => black. */
-    .delta-positive { 
-      color: green; 
-      font-weight: bold; 
-    }
-    .delta-negative { 
-      color: red; 
-      font-weight: bold; 
-    }
-
     .expand-toggle {
       cursor: pointer; 
       color: #007bff; 
@@ -265,19 +258,14 @@
     .position-row td { 
       padding-left: 4em; 
     }
-    .subtotal-row td {
-      font-weight: bold; 
-      background: #f0f0f0;
-    }
 
-    .total-row {
-      background: var(--header-footer-bg);
-      font-weight: bold;
-      text-align: right;
+    .delta-positive { 
+      color: green; 
+      font-weight: bold; 
     }
-    .total-row td {
-      border-top: 2px solid #ccc;
-      padding: 8px;
+    .delta-negative { 
+      color: red; 
+      font-weight: bold; 
     }
 
     /* Charts */
