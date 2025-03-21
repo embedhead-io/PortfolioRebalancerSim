@@ -192,18 +192,20 @@
       font-size: 0.85rem;
       overflow: visible;  /* Changed from hidden to visible */
     }
-    /* 11 columns: Name + 5 for dollars + 5 for percents */
-    thead th:nth-child(1)  { width: 16%; text-align: left; }
-    thead th:nth-child(2)  { width: 9%; }
-    thead th:nth-child(3)  { width: 9%; }
-    thead th:nth-child(4)  { width: 9%; }
-    thead th:nth-child(5)  { width: 9%; }
-    thead th:nth-child(6)  { width: 9%; }
+    /* 13 columns: Name + 6 for dollars + 6 for percents */
+    thead th:nth-child(1)  { width: 14%; text-align: left; }
+    thead th:nth-child(2)  { width: 7%; }
+    thead th:nth-child(3)  { width: 7%; }
+    thead th:nth-child(4)  { width: 7%; }
+    thead th:nth-child(5)  { width: 7%; }
+    thead th:nth-child(6)  { width: 7%; }
     thead th:nth-child(7)  { width: 7%; }
-    thead th:nth-child(8)  { width: 7%; }
-    thead th:nth-child(9)  { width: 8%; }
-    thead th:nth-child(10) { width: 8%; }
-    thead th:nth-child(11) { width: 8%; }
+    thead th:nth-child(8)  { width: 6%; }
+    thead th:nth-child(9)  { width: 6%; }
+    thead th:nth-child(10) { width: 6%; }
+    thead th:nth-child(11) { width: 6%; }
+    thead th:nth-child(12) { width: 6%; }
+    thead th:nth-child(13) { width: 6%; }
 
     th:first-child, td:first-child {
       text-align: left; 
@@ -449,7 +451,7 @@
       </p>
       <p>
         <strong>Portfolio Value:</strong>
-        $<span id="clientValue" class="editable-field">0</span>
+        $<span id="clientValue" class="editable-field" data-tooltip="Click to edit">0</span>
       </p>
       <p>
         <strong>Target Allocation:</strong>
@@ -483,14 +485,16 @@
           <th>Asset/Class/Position</th>
           <th>Current ($)</th>
           <th>Target ($)</th>
-          <th>Delta ($)</th>
+          <th>Pre-Rebal Delta ($)</th>
           <th>Proposed ($)</th>
           <th>Total ($)</th>
+          <th>Post-Rebal Delta ($)</th>
           <th>Current (%)</th>
           <th>Target (%)</th>
-          <th>Delta (%)</th>
+          <th>Pre-Rebal Delta (%)</th>
           <th>Proposed (%)</th>
           <th>Total (%)</th>
+          <th>Post-Rebal Delta (%)</th>
         </tr>
       </thead>
       <tbody id="portfolioRows"></tbody>
@@ -819,12 +823,12 @@ function renderNode(node, level) {
   tdTar.textContent = formatMoney(node.targetDollar || 0);
   tr.appendChild(tdTar);
 
-  // 3) Delta($) => (target - total)
-  let dval = (node.targetDollar || 0) - (node.totalDollar || 0);
-  let tdDelta = document.createElement('td');
-  tdDelta.textContent = withSignMoney(dval);
-  colorDeltaCell(tdDelta, dval);
-  tr.appendChild(tdDelta);
+  // 3) Pre-Rebal Delta($) => (target - current)
+  let preRebalDelta = (node.targetDollar || 0) - (node.currentDollar || 0);
+  let tdPreDelta = document.createElement('td');
+  tdPreDelta.textContent = withSignMoney(preRebalDelta);
+  colorDeltaCell(tdPreDelta, preRebalDelta);
+  tr.appendChild(tdPreDelta);
 
   // 4) Proposed($)
   let tdProp = document.createElement('td');
@@ -844,25 +848,32 @@ function renderNode(node, level) {
   let tdTot = document.createElement('td');
   tdTot.textContent = formatMoney(node.totalDollar || 0);
   tr.appendChild(tdTot);
+  
+  // 6) Post-Rebal Delta($) => (target - total)
+  let postRebalDelta = (node.targetDollar || 0) - (node.totalDollar || 0);
+  let tdPostDelta = document.createElement('td');
+  tdPostDelta.textContent = withSignMoney(postRebalDelta);
+  colorDeltaCell(tdPostDelta, postRebalDelta);
+  tr.appendChild(tdPostDelta);
 
-  // 6) Current(%)
+  // 7) Current(%)
   let tdCurPct = document.createElement('td');
   tdCurPct.textContent = (node.currentPct || 0).toFixed(2) + "%";
   tr.appendChild(tdCurPct);
 
-  // 7) Target(%)
+  // 8) Target(%)
   let tdTarPct = document.createElement('td');
   tdTarPct.textContent = (node.targetPct || 0).toFixed(2) + "%";
   tr.appendChild(tdTarPct);
 
-  // 8) Delta(%)
-  let dp = (node.targetPct || 0) - (node.totalPct || 0);
-  let tdDeltaPct = document.createElement('td');
-  tdDeltaPct.textContent = withSignPct(dp);
-  colorDeltaCell(tdDeltaPct, dp);
-  tr.appendChild(tdDeltaPct);
+  // 9) Pre-Rebal Delta(%)
+  let preRebalDeltaPct = (node.targetPct || 0) - (node.currentPct || 0);
+  let tdPreDeltaPct = document.createElement('td');
+  tdPreDeltaPct.textContent = withSignPct(preRebalDeltaPct);
+  colorDeltaCell(tdPreDeltaPct, preRebalDeltaPct);
+  tr.appendChild(tdPreDeltaPct);
 
-  // 9) Proposed(%)
+  // 10) Proposed(%)
   let tdPropPct = document.createElement('td');
   tdPropPct.className = 'proposed-col';
   let pp = node.proposedPct || 0;
@@ -875,11 +886,18 @@ function renderNode(node, level) {
   tdPropPct.onclick = () => editProposedCell(tdPropPct, node, 'percent');
   tr.appendChild(tdPropPct);
 
-  // 10) Total(%)
+  // 11) Total(%)
   let tdTotPct = document.createElement('td');
   let tp = node.totalPct || 0;
   tdTotPct.textContent = tp.toFixed(2) + "%";
   tr.appendChild(tdTotPct);
+  
+  // 12) Post-Rebal Delta(%)
+  let postRebalDeltaPct = (node.targetPct || 0) - (node.totalPct || 0);
+  let tdPostDeltaPct = document.createElement('td');
+  tdPostDeltaPct.textContent = withSignPct(postRebalDeltaPct);
+  colorDeltaCell(tdPostDeltaPct, postRebalDeltaPct);
+  tr.appendChild(tdPostDeltaPct);
 
   document.getElementById('portfolioRows').appendChild(tr);
 
@@ -897,8 +915,10 @@ function buildTotalRow() {
   let pDollar   = root.proposedDollar  || 0;
   let totDollar = root.totalDollar     || 0;
 
-  let dval = tDollar - totDollar; 
-  let dpct = (root.targetPct || 0) - (root.totalPct || 0);
+  let preRebalDelta = tDollar - cDollar;
+  let postRebalDelta = tDollar - totDollar;
+  let preRebalPctDelta = (root.targetPct || 0) - (root.currentPct || 0);
+  let postRebalPctDelta = (root.targetPct || 0) - (root.totalPct || 0);
 
   let tr = document.createElement('tr');
   tr.classList.add('total-row');
@@ -915,10 +935,10 @@ function buildTotalRow() {
   tdTarg.textContent = formatMoney(tDollar);
   tr.appendChild(tdTarg);
 
-  let tdDelta = document.createElement('td');
-  tdDelta.textContent = withSignMoney(dval);
-  colorDeltaCell(tdDelta, dval);
-  tr.appendChild(tdDelta);
+  let tdPreDelta = document.createElement('td');
+  tdPreDelta.textContent = withSignMoney(preRebalDelta);
+  colorDeltaCell(tdPreDelta, preRebalDelta);
+  tr.appendChild(tdPreDelta);
 
   let tdProp = document.createElement('td');
   tdProp.textContent = formatMoney(pDollar);
@@ -927,6 +947,11 @@ function buildTotalRow() {
   let tdTot = document.createElement('td');
   tdTot.textContent = formatMoney(totDollar);
   tr.appendChild(tdTot);
+  
+  let tdPostDelta = document.createElement('td');
+  tdPostDelta.textContent = withSignMoney(postRebalDelta);
+  colorDeltaCell(tdPostDelta, postRebalDelta);
+  tr.appendChild(tdPostDelta);
 
   let tdCurrPct = document.createElement('td');
   tdCurrPct.textContent = (root.currentPct || 0).toFixed(2) + "%";
@@ -936,10 +961,10 @@ function buildTotalRow() {
   tdTargPct.textContent = (root.targetPct || 0).toFixed(2) + "%";
   tr.appendChild(tdTargPct);
 
-  let tdDeltaPct = document.createElement('td');
-  tdDeltaPct.textContent = withSignPct(dpct);
-  colorDeltaCell(tdDeltaPct, dpct);
-  tr.appendChild(tdDeltaPct);
+  let tdPreDeltaPct = document.createElement('td');
+  tdPreDeltaPct.textContent = withSignPct(preRebalPctDelta);
+  colorDeltaCell(tdPreDeltaPct, preRebalPctDelta);
+  tr.appendChild(tdPreDeltaPct);
 
   let tdPropPct = document.createElement('td');
   tdPropPct.textContent = (root.proposedPct || 0).toFixed(2) + "%";
@@ -948,6 +973,11 @@ function buildTotalRow() {
   let tdTotPct = document.createElement('td');
   tdTotPct.textContent = (root.totalPct || 0).toFixed(2) + "%";
   tr.appendChild(tdTotPct);
+  
+  let tdPostDeltaPct = document.createElement('td');
+  tdPostDeltaPct.textContent = withSignPct(postRebalPctDelta);
+  colorDeltaCell(tdPostDeltaPct, postRebalPctDelta);
+  tr.appendChild(tdPostDeltaPct);
 
   tb.appendChild(tr);
 }
@@ -1130,8 +1160,13 @@ function onCashTargetChange() {
   document.getElementById('targetBonds').textContent = (userBondPct * 100).toFixed(0);
   document.getElementById('targetCash').textContent = (userCashPct * 100).toFixed(0);
   
+  // Apply the new allocation and render
   applyRiskAllocation();
   renderAll();
+  
+  // Show a message to confirm the change
+  document.getElementById('tradeMessage').textContent = "Cash target updated to " + (userCashPct * 100).toFixed(0) + "%.";
+  document.getElementById('tradeMessage').className = "success";
 }
 
 /***************************************************************
@@ -1148,6 +1183,11 @@ function doGenerateNewClient() {
   totalPortfolioValue = val;
   document.getElementById('clientValue').textContent = formatMoney(val);
 
+  // Generate random cash target between 0% and 20%
+  const randomCashPct = Math.round(Math.random() * 20);
+  document.getElementById('cashTargetInput').value = randomCashPct;
+  userCashPct = randomCashPct / 100;
+
   generateRandomNestedData();
   // assign parents for bubble-up logic
   assignParents(root, null);
@@ -1158,11 +1198,17 @@ function doGenerateNewClient() {
   scaleNode(root, ratio);
   aggregateNode(root);
 
+  // Reset any proposed values
+  resetProposedValues(root);
+
   originalData = JSON.parse(JSON.stringify(root));
   originalPortfolioValue = val;
 
   applyRiskAllocation();
   renderAll();
+  
+  document.getElementById('tradeMessage').textContent = "New client portfolio generated.";
+  document.getElementById('tradeMessage').className = "success";
 }
 
 function scaleNode(node, ratio) {
@@ -1176,13 +1222,10 @@ function scaleNode(node, ratio) {
 
 function doResetTrades() {
   if (originalData) {
-    root = JSON.parse(JSON.stringify(originalData));
-    totalPortfolioValue = originalPortfolioValue;
-    document.getElementById('clientValue').textContent = formatMoney(totalPortfolioValue);
-    // re-assign parents for the fresh copy
-    assignParents(root, null);
+    resetProposedValues(root);
     renderAll();
-    document.getElementById('tradeMessage').textContent = "Reset to initial scenario.";
+    document.getElementById('tradeMessage').textContent = "All proposed trades have been reset.";
+    document.getElementById('tradeMessage').className = "success";
   }
 }
 
@@ -1428,6 +1471,9 @@ const utils = {
  ***************************************************************/
 function enablePortfolioValueEdit() {
   const valElem = document.getElementById('clientValue');
+  valElem.style.cursor = 'pointer';
+  valElem.style.borderBottom = '1px dashed var(--editable-field-border)';
+  
   valElem.addEventListener('click', function onClick() {
     const oldVal = valElem.textContent.replace(/,/g, '').replace(/[^\d.\-+]/g, '');
     valElem.innerHTML = '';
@@ -1435,13 +1481,22 @@ function enablePortfolioValueEdit() {
     const input = document.createElement('input');
     input.type = 'text';
     input.value = oldVal || '0';
+    input.style.width = '100px';
+    input.style.textAlign = 'right';
 
     input.onblur = function() {
       let parsed = parseFloat(input.value.replace(/,/g, '')) || 0;
       if (parsed < 1) parsed = 1;
+      
+      // Update the portfolio value
       totalPortfolioValue = parsed;
+      
+      // Update the display
       valElem.innerHTML = formatMoney(parsed);
-      onRiskChange();
+      
+      // Update allocations based on new portfolio value
+      applyRiskAllocation();
+      renderAll();
     };
 
     input.onkeydown = function(e) {
@@ -1505,6 +1560,8 @@ function resetProposedValues(node) {
 window.addEventListener('DOMContentLoaded', () => {
   // Initialize charts first
   initCharts();
+  
+  // Enable editing of portfolio value
   enablePortfolioValueEdit();
 
   // Set up event listeners
@@ -1535,8 +1592,16 @@ window.addEventListener('DOMContentLoaded', () => {
   // Do initial render
   renderAll();
   
-  // Then generate a complete client scenario
+  // Set the original data for reset functionality
+  originalData = JSON.parse(JSON.stringify(root));
+  originalPortfolioValue = totalPortfolioValue;
+  
+  // Generate a complete client scenario
   doGenerateNewClient();
+  
+  // Add message to guide user
+  document.getElementById('tradeMessage').textContent = "Click 'Rebalance' to generate trades or edit values directly in the Proposed columns.";
+  document.getElementById('tradeMessage').className = "success";
 });
 
 // Financial Constants
